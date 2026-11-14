@@ -186,9 +186,29 @@ $('focusStart').onclick=()=>{if(focusRunning){stopFocus();$('focusStatus').textC
 $('focusReset').onclick=()=>{stopFocus();focusRemaining=focusDuration;$('focusStart').textContent='开始';$('focusStatus').textContent='计时已重置';paintFocus()};
 paintFocus();
 
-$('export').onclick=()=>{const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='xg-prime-backup-'+new Date().toISOString().slice(0,10)+'.json';a.click();URL.revokeObjectURL(url)};
+$('export').onclick=()=>{
+ const backup={format:'xg-prime-backup',version:2,exportedAt:new Date().toISOString(),data,notes:JSON.parse(localStorage.getItem('xg-prime-notes-v1')||'[]'),workbench:JSON.parse(localStorage.getItem('xg-prime-workbench-v1')||'{}'),language:localStorage.getItem('xg-prime-language')||'zh-CN'};
+ const blob=new Blob([JSON.stringify(backup,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='xg-prime-backup-'+new Date().toISOString().slice(0,10)+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+};
 $('importBtn').onclick=()=>$('importFile').click();
-$('importFile').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const obj=JSON.parse(await f.text());if(!obj||!Array.isArray(obj.goals)||!Array.isArray(obj.tx))throw Error();data={goals:obj.goals,tx:obj.tx,career:Array.isArray(obj.career)?obj.career:[],investments:Array.isArray(obj.investments)?obj.investments:[],careerJobs:Array.isArray(obj.careerJobs)?obj.careerJobs:[],learned:Array.isArray(obj.learned)?obj.learned:[],seeded:true};save();alert('数据已恢复')}catch(err){alert('文件格式不正确，无法导入')}e.target.value=''};
+$('importFile').onchange=async e=>{
+ const f=e.target.files[0];if(!f)return;
+ try{
+  const obj=JSON.parse(await f.text()),isFull=obj&&obj.format==='xg-prime-backup'&&obj.version>=2,source=isFull?obj.data:obj;
+  if(!source||!Array.isArray(source.goals)||!Array.isArray(source.tx))throw Error('invalid data');
+  const restored={goals:source.goals,tx:source.tx,career:Array.isArray(source.career)?source.career:[],investments:Array.isArray(source.investments)?source.investments:[],careerJobs:Array.isArray(source.careerJobs)?source.careerJobs:[],learned:Array.isArray(source.learned)?source.learned:[],seeded:true};
+  if(isFull){
+   if(!Array.isArray(obj.notes)||!obj.workbench||typeof obj.workbench!=='object'||!Array.isArray(obj.workbench.tasks)||!Array.isArray(obj.workbench.habits))throw Error('invalid full backup');
+   localStorage.setItem('xg-prime-notes-v1',JSON.stringify(obj.notes.filter(n=>n&&typeof n.text==='string').slice(0,500)));
+   localStorage.setItem('xg-prime-workbench-v1',JSON.stringify({tasks:obj.workbench.tasks.filter(t=>t&&typeof t.title==='string').slice(0,1000),habits:obj.workbench.habits.filter(h=>h&&typeof h.name==='string'&&Array.isArray(h.logs)).slice(0,100)}));
+   if(['zh-CN','en','ja','ko','es','fr'].includes(obj.language))localStorage.setItem('xg-prime-language',obj.language);
+  }
+  localStorage.setItem(STORE,JSON.stringify(restored));data=restored;save();
+  if(isFull){notes=JSON.parse(localStorage.getItem('xg-prime-notes-v1')||'[]');workData=JSON.parse(localStorage.getItem('xg-prime-workbench-v1')||'{}');drawNotes();drawWorkbench();if(obj.language&&['zh-CN','en','ja','ko','es','fr'].includes(obj.language))applyLanguage(obj.language)}
+  alert('数据已恢复'+(isFull?'（含备忘和工作台）':''));
+ }catch(err){alert('文件格式不正确或存储空间不足，未能完整恢复')}
+ e.target.value='';
+};
 $('reset').onclick=()=>{if(confirm('确定清空本机所有 XG Prime 数据？建议先导出备份。')){data={goals:[],tx:[],career:[],investments:[],careerJobs:[],learned:[],seeded:false};save()}};
 
 /* Internationalization: six interface languages; user records remain unchanged. */
