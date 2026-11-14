@@ -423,6 +423,10 @@ Object.assign(DICT.en,{
 });
 Object.assign(DICT.en,{'快速备忘':'Quick Notes','记录想法、待办或灵感……':'Capture an idea, task or inspiration…','保存备忘':'Save note','搜索备忘':'Search notes','条备忘':' notes','条显示':' shown','暂无备忘':'No notes yet','置顶':'Pin','取消置顶':'Unpin','删除':'Delete','备忘仅保存在当前设备浏览器中，与目标、收支数据分开存储。':'Notes are stored only in this device’s browser, separately from goals and transactions.','单条备忘最多 5000 个字符':'Each note can contain up to 5,000 characters','备忘保存失败：本机存储空间可能不足':'Could not save note. Local storage may be full'});
 Object.assign(DICT.en,{'个人工作台':'Personal Workbench','把今天要做的事、长期习惯和进度集中管理。':'Manage today’s tasks, long-term habits and progress in one place.','待完成任务':'Open tasks','今日已完成':'Completed today','今日习惯打卡':'Habits checked in today','任务管理':'Task management','添加任务，例如：练习英语 20 分钟':'Add a task, e.g. practice English for 20 minutes','截止日期':'Due date','普通':'Normal','高优先级':'High priority','低优先级':'Low priority','全部':'All','待完成':'Open','已完成':'Done','这里还没有任务。添加第一项吧。':'No tasks yet. Add your first one.','习惯追踪':'Habit tracking','添加习惯，例如：每天学习英语':'Add a habit, e.g. study English daily','打卡和连续天数仅根据本设备记录计算。':'Check-ins and streaks are calculated from this device only.','连续 ':'Streak: ',' 天 · 累计 ':' days · Total ',' 次':' check-ins','添加一个想长期坚持的习惯。':'Add a habit you want to maintain.','今日打卡':'Check in today','已打卡':'Checked in','数据说明':'Data notes','工作台数据独立保存在当前设备浏览器中，不会覆盖原有目标、收支或备忘记录。清理浏览器数据前请先留意备份。':'Workbench data is stored separately in this device’s browser and does not overwrite goals, transactions or notes. Consider a backup before clearing browser data.','工作台保存失败：本机存储空间可能不足':'Could not save workbench. Local storage may be full','任务数量已达上限':'Task limit reached','习惯数量已达上限':'Habit limit reached','这个习惯已经存在':'This habit already exists'});
+
+// Chinese UI normalization: translate embedded English labels as well as dynamic text.
+Object.assign(DICT['zh-CN']||(DICT['zh-CN']={}),{"Aim Higher":"向更高目标前进","四大中心":"四大功能中心","日历中心":"日历中心","财务中心":"财务中心","工作台":"工作台","数据中心":"数据中心","今日目标":"今日目标","市场动态":"市场动态","示例数据":"示例数据","常用工具":"常用工具","今日焦点":"今日焦点","YOUR NEXT STEP":"今日下一步","BUILD YOUR ROUTINE":"建立你的日常节奏","MY GOALS":"我的目标","SMALL STEPS":"从小处开始","WORD OF THE DAY":"每日单词","WORD":"单词","Finance":"财务","OVERVIEW":"概览","INCOME":"收入","MARKET":"市场","Market Overview":"市场概览","DEMO DATA":"示例数据","TOTAL INCOME":"总收入","INVESTMENTS":"投资记录","Investments":"投资","RECORD":"记账","BUILD REAL-WORLD SKILLS":"培养实用技能","SKILLS":"技能学习","Jobs":"求职","SIMPLE UTILITIES":"实用工具","Tools":"工具","FOCUS":"专注","FOCUS TIMER":"专注计时器","LANGUAGE":"语言","BROWSER":"浏览器","NOTES":"备忘","LOCAL":"本地","DATA":"数据","EXPORT":"导出","IMPORT":"导入","VERSION":"版本","Quick Access":"快捷入口","Daily Goals":"每日目标","Skill Development":"技能成长","Open":"打开","Profile":"个人中心","Plan · Learn · Grow":"计划 · 学习 · 成长","Add":"添加","Save":"保存","Delete":"删除","Export":"导出","Import":"导入","Translate":"翻译","Calculator":"计算器","Focus timer":"专注计时器","Personal Workbench":"个人工作台","Task management":"任务管理","Habit tracking":"习惯追踪","Data notes":"数据说明","No tasks yet. Add your first one.":"还没有任务，添加第一项吧。","No notes yet":"暂无备忘","No records yet.":"暂无记录。","completed":"已完成"});
+
 const I18N_KEYS=Object.fromEntries(Object.entries(DICT).map(([lang,dict])=>[lang,Object.keys(dict).filter(k=>k.length>1).sort((a,b)=>b.length-a.length)]));
 let currentLanguage=localStorage.getItem('xg-prime-language')||'zh-CN';
 function applyLanguage(lang){
@@ -436,7 +440,7 @@ function applyLanguage(lang){
   const original=node.__xgOriginal;
   const key=original.trim();
   if(!key)continue;
-  if(lang==='zh-CN'){node.nodeValue=original;continue}
+  
   let translated=original;
   const keys=I18N_KEYS[lang]||[];
   for(const k of keys)if(translated.includes(k))translated=translated.split(k).join(dict[k]);
