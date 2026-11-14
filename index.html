@@ -349,8 +349,46 @@ $('next').onclick=()=>{wi=(wi+1)%words.length;showWord()};
 $('prev').onclick=()=>{wi=(wi-1+words.length)%words.length;showWord()};
 $('markLearned').onclick=()=>{const w=words[wi][0];if(!data.learned.includes(w))data.learned.push(w);save();showWord()};
 showWord();
-$('calculate').onclick=()=>{const a=Number($('calcA').value),b=Number($('calcB').value),op=$('calcOp').value;if($('calcA').value===''||$('calcB').value==='')return;$('calcResult').textContent=op==='+'?a+b:op==='-'?a-b:op==='*'?a*b:b===0?'不能除以 0':a/b};
-$('convert').onclick=()=>{const km=Number($('km').value);$('mileResult').textContent=$('km').value===''?'—':(km*0.621371).toFixed(3)+' mi'};
+/* Safe expression parser: no eval or dynamic code execution. */
+let calcHistory=[];
+function parseExpression(source){
+ const tokens=String(source).replace(/×/g,'*').replace(/÷/g,'/').replace(/−/g,'-').replace(/π/gi,'pi').replace(/√/g,'sqrt').match(/\d+(?:\.\d*)?|\.\d+|pi|sqrt|[()+\-*/^%]/gi)||[];
+ const compact=String(source).replace(/\s/g,'').replace(/×/g,'*').replace(/÷/g,'/').replace(/−/g,'-').replace(/π/gi,'pi').replace(/√/g,'sqrt');
+ if(!tokens.length||tokens.join('')!==compact)throw Error('表达式格式不正确');
+ let i=0;const peek=()=>tokens[i],take=()=>tokens[i++];
+ function primary(){let t=take();if(t===undefined)throw Error('表达式不完整');if(t==='+')return unary();if(t==='-')return -unary();if(t==='('){const v=add();if(take()!==')')throw Error('缺少右括号');return v}if(String(t).toLowerCase()==='pi')return Math.PI;if(String(t).toLowerCase()==='sqrt'){const v=peek()==='('?primary():unary();if(v<0)throw Error('负数不能开平方');return Math.sqrt(v)}if(/^\d/.test(t)||/^\.\d/.test(t))return Number(t);throw Error('无法识别的符号')}
+ function power(){let v=primary();if(peek()==='^'){take();v=Math.pow(v,power())}while(peek()==='%'){take();v/=100}return v}
+ function unary(){return power()}
+ function mul(){let v=unary();while(peek()==='*'||peek()==='/'){const op=take(),n=unary();if(op==='/'&&n===0)throw Error('不能除以 0');v=op==='*'?v*n:v/n}return v}
+ function add(){let v=mul();while(peek()==='+'||peek()==='-'){const op=take(),n=mul();v=op==='+'?v+n:v-n}return v}
+ const result=add();if(i!==tokens.length||!Number.isFinite(result))throw Error('计算结果无效');return result
+}
+const calcFmt=n=>Number.isFinite(n)?String(Number(n.toPrecision(12))):'错误';
+function drawCalcHistory(){$('calcHistory').innerHTML=calcHistory.length?calcHistory.slice(0,12).map(x=>'<div class="listrow"><span>'+safe(x.expr)+'</span><strong>'+safe(x.result)+'</strong></div>').join(''):'暂无记录'}
+$('scienceCalculate').onclick=()=>{try{const expr=$('scienceExpr').value,result=calcFmt(parseExpression(expr));$('scienceResult').textContent=result;calcHistory.unshift({expr,result});drawCalcHistory()}catch(e){$('scienceResult').textContent=e.message}};
+document.querySelectorAll('[data-calc-key]').forEach(b=>b.onclick=()=>{$('scienceExpr').value+=b.dataset.calcKey});
+$('calcClear').onclick=()=>{$('scienceExpr').value='';$('scienceResult').textContent='结果显示在这里'};
+$('calcBackspace').onclick=()=>{$('scienceExpr').value=$('scienceExpr').value.slice(0,-1)};
+$('calcHistoryClear').onclick=()=>{calcHistory=[];drawCalcHistory()};
+$('scienceExpr').addEventListener('keydown',e=>{if(e.key==='Enter')$('scienceCalculate').click()});
+const UNIT_MAP={length:{'米':1,'千米':1000,'厘米':.01,'毫米':.001,'英里':1609.344,'英尺':.3048,'英寸':.0254},weight:{'千克':1,'克':.001,'吨':1000,'磅':.45359237,'盎司':.0283495},area:{'平方米':1,'平方千米':1e6,'平方英尺':.092903,'公顷':10000,'英亩':4046.856},volume:{'升':1,'毫升':.001,'立方米':1000,'美制加仑':3.78541},speed:{'米/秒':1,'千米/小时':1/3.6,'英里/小时':.44704},time:{'秒':1,'分钟':60,'小时':3600,'天':86400},data:{'字节':1,'KB':1024,'MB':1048576,'GB':1073741824,'TB':1099511627776}};
+function populateUnits(){const cat=$('unitCategory').value,units=cat==='temperature'?['摄氏度','华氏度','开尔文']:Object.keys(UNIT_MAP[cat]);$('unitFrom').innerHTML=units.map((u,i)=>'<option '+(i===0?'selected':'')+'>'+u+'</option>').join('');$('unitTo').innerHTML=units.map((u,i)=>'<option '+(i===1?'selected':'')+'>'+u+'</option>').join('')}
+$('unitCategory').onchange=populateUnits;populateUnits();
+$('unitConvert').onclick=()=>{const v=Number($('unitValue').value),cat=$('unitCategory').value,a=$('unitFrom').value,b=$('unitTo').value;if($('unitValue').value===''||!Number.isFinite(v))return;let out;if(cat==='temperature'){const c=a==='摄氏度'?v:a==='华氏度'?(v-32)*5/9:v-273.15;out=b==='摄氏度'?c:b==='华氏度'?c*9/5+32:c+273.15}else out=v*UNIT_MAP[cat][a]/UNIT_MAP[cat][b];$('unitResult').textContent=calcFmt(out)+' '+b};
+$('unitSwap').onclick=()=>{const a=$('unitFrom').value,b=$('unitTo').value;$('unitFrom').value=b;$('unitTo').value=a};
+const CAL_STORE='xg-prime-calendar-v1',LEARN_STORE='xg-prime-learning-v1';let calendarItems=[],learningItems=[];
+try{calendarItems=JSON.parse(localStorage.getItem(CAL_STORE)||'[]');if(!Array.isArray(calendarItems))calendarItems=[]}catch(e){calendarItems=[]}
+try{learningItems=JSON.parse(localStorage.getItem(LEARN_STORE)||'[]');if(!Array.isArray(learningItems))learningItems=[]}catch(e){learningItems=[]}
+function drawToolFinance(){let income=0,expense=0;data.tx.forEach(t=>{if(t.type==='income')income+=Number(t.amount);else expense+=Number(t.amount)});$('toolIncome').textContent=money(income);$('toolExpense').textContent=money(expense);$('toolTxList').innerHTML=data.tx.slice().reverse().map(t=>'<div class="listrow"><span>'+safe(t.memo||'收支记录')+'<small class="muted" style="display:block">'+safe(t.date)+'</small></span><strong>'+ (t.type==='income'?'+':'−')+money(t.amount)+'</strong></div>').join('')||'<p class="muted">暂无记录</p>'}
+$('toolTxAdd').onclick=()=>{const amount=Number($('toolTxAmount').value);if(!Number.isFinite(amount)||amount<=0){$('toolTxAmount').focus();return}data.tx.push({type:$('toolTxType').value,amount,memo:$('toolTxMemo').value.trim(),date:new Date().toISOString().slice(0,10)});save();$('toolTxAmount').value='';$('toolTxMemo').value='';drawToolFinance()};
+function drawCalendar(){const f=$('calendarFilter').value,items=calendarItems.slice().sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time)).filter(x=>f==='all'||(f==='done'?x.done:!x.done));$('calendarList').innerHTML=items.map(x=>'<div class="listrow"><span>'+safe(x.title)+'<small class="muted" style="display:block">'+safe(x.date)+' '+safe(x.time||'')+' '+safe(x.note||'')+'</small></span><button class="btn secondary" data-cal-done="'+x.id+'">'+(x.done?'撤销':'完成')+'</button><button class="btn secondary" data-cal-del="'+x.id+'">删除</button></div>').join('')||'<p class="muted">暂无日程</p>'}
+$('calendarAdd').onclick=()=>{const title=$('calendarTitle').value.trim(),date=$('calendarDate').value;if(!title||!date){$('calendarTitle').focus();return}calendarItems.push({id:Date.now(),title,date,time:$('calendarTime').value,note:$('calendarNote').value.trim(),done:false});localStorage.setItem(CAL_STORE,JSON.stringify(calendarItems));$('calendarTitle').value='';$('calendarNote').value='';drawCalendar()};
+$('calendarList').onclick=e=>{const done=e.target.dataset.calDone,del=e.target.dataset.calDel;if(done){const x=calendarItems.find(v=>String(v.id)===done);if(x)x.done=!x.done}if(del)calendarItems=calendarItems.filter(v=>String(v.id)!==del);localStorage.setItem(CAL_STORE,JSON.stringify(calendarItems));drawCalendar()};
+$('calendarFilter').onchange=drawCalendar;
+function drawLearning(){const total=learningItems.reduce((n,x)=>n+(Number(x.minutes)||0),0);$('learningTotal').textContent=total+' 分钟';$('learningDone').textContent=learningItems.filter(x=>x.done).length;$('learningList').innerHTML=learningItems.map(x=>'<div class="listrow"><span>'+safe(x.title)+'<small class="muted" style="display:block">'+safe(x.date)+' · '+x.minutes+' 分钟</small></span><button class="btn secondary" data-learn-done="'+x.id+'">'+(x.done?'已完成':'完成')+'</button><button class="btn secondary" data-learn-del="'+x.id+'">删除</button></div>').join('')||'<p class="muted">暂无学习计划</p>'}
+$('learningAdd').onclick=()=>{const title=$('learningTitle').value.trim(),minutes=Number($('learningMinutes').value);if(!title||!Number.isFinite(minutes)||minutes<1)return;learningItems.push({id:Date.now(),title,minutes,date:$('learningDate').value||new Date().toISOString().slice(0,10),done:false});localStorage.setItem(LEARN_STORE,JSON.stringify(learningItems));$('learningTitle').value='';$('learningMinutes').value='';drawLearning()};
+$('learningList').onclick=e=>{const done=e.target.dataset.learnDone,del=e.target.dataset.learnDel;if(done){const x=learningItems.find(v=>String(v.id)===done);if(x)x.done=!x.done}if(del)learningItems=learningItems.filter(v=>String(v.id)!==del);localStorage.setItem(LEARN_STORE,JSON.stringify(learningItems));drawLearning()};
+$('toolExport').onclick=()=>$('export').click();$('toolImport').onclick=()=>$('importBtn').click();
 
 /* Focus timer: deadline-based countdown remains accurate when the tab is backgrounded. */
 let focusMode='focus',focusDuration=25*60,focusRemaining=focusDuration,focusDeadline=0,focusInterval=null,focusRunning=false;
@@ -484,7 +522,7 @@ $('marketRefresh').onclick=()=>{drawSpark('marketSpark');drawSpark('marketSpark2
 $('investList').onclick=e=>{if(e.target.dataset.invdel!==undefined){data.investments.splice(+e.target.dataset.invdel,1);save()}};
 $('addInvest').onclick=()=>{const n=Number($('investAmount').value);if($('investName').value.trim()&&n>0){data.investments.push({name:$('investName').value.trim(),amount:n,change:Number($('investChange').value||0)});$('investName').value='';$('investAmount').value='';$('investChange').value='';save()}};
 $('careerJobsList').onchange=e=>{if(e.target.dataset.careerjob!==undefined){data.careerJobs[+e.target.dataset.careerjob]=e.target.checked;save()}};
-function openToolWorkspace(key){$('toolCatalog').hidden=true;$('toolDetail').hidden=false;document.querySelectorAll('.tool-section').forEach(x=>x.classList.toggle('tool-active',x.dataset.toolSection===key));const meta={focus:['专注计时','番茄专注与休息计时器'],language:['语言工具','离线英汉常用词查询'],calc:['计算与换算','数字计算与常用单位转换'],browser:['浏览与搜索','快速打开网址或搜索网页'],notes:['快速备忘','本地保存、搜索、置顶和管理备忘']};$('toolDetailTitle').textContent=(meta[key]||['工具',''])[0];$('toolDetailDesc').textContent=(meta[key]||['',''])[1];$('tools').scrollIntoView({behavior:'smooth',block:'start'});}
+function openToolWorkspace(key){$('toolCatalog').hidden=true;$('toolDetail').hidden=false;document.querySelectorAll('.tool-section').forEach(x=>x.classList.toggle('tool-active',x.dataset.toolSection===key));const meta={focus:['专注计时','番茄专注与休息计时器'],language:['语言工具','离线英汉常用词查询'],calc:['计算与换算','科学计算与多类别单位换算'],browser:['浏览与搜索','快速打开网址或搜索网页'],notes:['快速备忘','本地保存、搜索、置顶和管理备忘'],finance:['财务中心','收支记录与统计'],calendar:['日历中心','日程与事项管理'],learning:['学习成长','学习计划与进度追踪'],data:['数据中心','本地备份、恢复与隐私']};$('toolDetailTitle').textContent=(meta[key]||['工具',''])[0];$('toolDetailDesc').textContent=(meta[key]||['',''])[1];$('tools').scrollIntoView({behavior:'smooth',block:'start'});if(key==='finance')drawToolFinance();if(key==='calendar')drawCalendar();if(key==='learning')drawLearning();}
 function closeToolWorkspace(){$('toolDetail').hidden=true;$('toolCatalog').hidden=false;document.querySelectorAll('.tool-section').forEach(x=>x.classList.remove('tool-active'));}
 $('toolBack').onclick=closeToolWorkspace;
 document.querySelectorAll('[data-open-tool]').forEach(b=>b.onclick=()=>openToolWorkspace(b.dataset.openTool));
