@@ -377,6 +377,21 @@ function render(){
 function go(id){document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id===id));document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===id));window.scrollTo({top:0,behavior:'smooth'})}
 document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>go(b.dataset.tab));
 document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>go(b.dataset.go));
+
+function openToolWorkspace(key){const catalog=$('toolCatalog'),detail=$('toolDetail');if(!catalog||!detail)return;catalog.hidden=true;detail.hidden=false;document.querySelectorAll('.tool-section').forEach(x=>x.classList.toggle('tool-active',x.dataset.toolSection===key));const meta={calc:['计算与换算','科学计算器与多类别单位换算'],focus:['专注计时','番茄专注与休息计时器'],language:['语言工具','离线英汉词汇查询'],browser:['浏览与搜索','网址直达与网页搜索'],notes:['快速备忘','本地记录、搜索与置顶']};$('toolDetailTitle').textContent=(meta[key]||['工具','完整操作界面'])[0];$('toolDetailDesc').textContent=(meta[key]||['',''])[1];go('tools');}
+function closeToolWorkspace(){if($('toolDetail'))$('toolDetail').hidden=true;if($('toolCatalog'))$('toolCatalog').hidden=false;document.querySelectorAll('.tool-section').forEach(x=>x.classList.remove('tool-active'))}
+$('toolBack').onclick=closeToolWorkspace;
+document.querySelectorAll('[data-open-tool]').forEach(b=>b.addEventListener('click',()=>openToolWorkspace(b.dataset.openTool)));
+function openCenter(id){if(id==='me-data'){go('me');openMeView('data');return}go(id)}
+document.querySelectorAll('[data-center]').forEach(b=>b.addEventListener('click',()=>openCenter(b.dataset.center)));
+document.querySelectorAll('[data-home-tool]').forEach(b=>b.addEventListener('click',()=>{const map={finance:'money',calendar:'workspace',learning:'learn',data:'me-data'};openCenter(map[b.dataset.homeTool]||'tools')}));
+document.querySelectorAll('[data-tool]').forEach(b=>b.addEventListener('click',()=>{const key=b.dataset.tool==='calculator'?'calc':b.dataset.tool==='translate'?'language':b.dataset.tool;openToolWorkspace(key)}));
+function openMeView(view){$('meMenu').hidden=true;$('meFeedbackView').hidden=view!=='feedback';$('meDataView').hidden=view!=='data';$('meSettingsView').hidden=view!=='settings'}
+document.querySelectorAll('[data-me-view]').forEach(b=>b.addEventListener('click',()=>openMeView(b.dataset.meView)));
+document.querySelectorAll('[data-me-back]').forEach(b=>b.addEventListener('click',()=>{ $('meMenu').hidden=false;$('meFeedbackView').hidden=true;$('meDataView').hidden=true;$('meSettingsView').hidden=true; }));
+$('settingsLanguage').value=localStorage.getItem('xg-prime-language')||'zh-CN';
+$('settingsLanguage').onchange=e=>{localStorage.setItem('xg-prime-language',e.target.value);const top=$('languageSelect');if(top)top.value=e.target.value};
+
 $('profileShortcut').onclick=()=>go('me');
 $('date').textContent=new Date().toLocaleDateString('zh-CN',{year:'numeric',month:'long',day:'numeric',weekday:'long'});
 $('addGoal').onclick=()=>{const v=$('goalInput').value.trim();if(v){data.goals.push({text:v,done:false});$('goalInput').value='';save()}};
@@ -438,7 +453,7 @@ drawNotes();
 function buildFeedbackBody(){
  const type=$('feedbackType').value,title=$('feedbackTitle').value.trim(),detail=$('feedbackDetail').value.trim(),device=$('feedbackDevice').value.trim();
  if(!title||!detail){$('feedbackStatus').textContent='请填写标题和具体内容。';return null}
- return {title:'['+type+'] '+title,body:'### 反馈类型\n'+type+'\n\n### 具体内容\n'+detail+'\n\n### 设备与浏览器\n'+(device||'未填写')+'\n\n### 应用版本\nXG Prime 3.6 Web\n\n---\n由 XG Prime 反馈入口生成；提交前请检查内容，不要包含个人隐私。'};
+ return {title:'['+type+'] '+title,body:'### 反馈类型\n'+type+'\n\n### 具体内容\n'+detail+'\n\n### 设备与浏览器\n'+(device||'未填写')+'\n\n### 应用版本\nXG Prime 3.9 Web\n\n---\n由 XG Prime 反馈入口生成；提交前请检查内容，不要包含个人隐私。'};
 }
 $('feedbackForm').addEventListener('submit',e=>{
  e.preventDefault();const item=buildFeedbackBody();if(!item)return;
