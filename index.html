@@ -486,6 +486,29 @@ $('calGrid').onclick=e=>{const key=e.target.closest('[data-cal-date]')?.dataset.
 $('calFilter').onchange=drawCalendar;
 $('calAdd').onclick=()=>{const title=$('calTitle').value.trim(),date=$('calDate').value;if(!title||!date){$('calTitle').focus();return}calendarEvents.push({id:String(Date.now())+String(Math.floor(Math.random()*1000)),title,date,time:$('calTime').value,note:$('calNote').value.trim(),done:false});localStorage.setItem(CALENDAR_STORE,JSON.stringify(calendarEvents));calendarSelected=date;const p=date.split('-').map(Number);calendarView=new Date(p[0],p[1]-1,1);$('calTitle').value='';$('calNote').value='';drawCalendar()};
 $('calList').onclick=e=>{const done=e.target.dataset.calDone,del=e.target.dataset.calDel;if(done){const item=calendarEvents.find(x=>String(x.id)===done);if(item)item.done=!item.done}else if(del)calendarEvents=calendarEvents.filter(x=>String(x.id)!==del);localStorage.setItem(CALENDAR_STORE,JSON.stringify(calendarEvents));drawCalendar()};
+/* Full local backup and restore, including the calendar workspace. */
+function exportAllData(){
+ const backup={format:'xg-prime-backup',version:4,exportedAt:new Date().toISOString(),data:data,workbench:workData,notes:notes,calendar:calendarEvents,language:localStorage.getItem('xg-prime-language')||$('settingsLanguage').value,theme:localStorage.getItem('xg-prime-theme')||'dark'};
+ const blob=new Blob([JSON.stringify(backup,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');
+ a.href=url;a.download='xg-prime-backup-'+new Date().toISOString().slice(0,10)+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+$('export').onclick=exportAllData;$('importBtn').onclick=()=>$('importFile').click();
+$('importFile').onchange=async e=>{
+ const file=e.target.files&&e.target.files[0];if(!file)return;
+ try{
+  const obj=JSON.parse(await file.text());if(!obj||obj.format!=='xg-prime-backup'||!obj.data||!Array.isArray(obj.data.goals)||!Array.isArray(obj.data.tx))throw Error('备份文件格式不正确');
+  const restored={goals:obj.data.goals.filter(x=>x&&typeof x.text==='string').slice(0,1000),tx:obj.data.tx.filter(x=>x&&Number.isFinite(Number(x.amount))&&Number(x.amount)>0).slice(0,5000),career:Array.isArray(obj.data.career)?obj.data.career:[],investments:Array.isArray(obj.data.investments)?obj.data.investments:[],careerJobs:Array.isArray(obj.data.careerJobs)?obj.data.careerJobs:[],learned:Array.isArray(obj.data.learned)?obj.data.learned:[],seeded:true};
+  if(obj.workbench&&typeof obj.workbench==='object'){workData={tasks:Array.isArray(obj.workbench.tasks)?obj.workbench.tasks.filter(x=>x&&typeof x.title==='string').slice(0,1000):[],habits:Array.isArray(obj.workbench.habits)?obj.workbench.habits.filter(x=>x&&typeof x.name==='string'&&Array.isArray(x.logs)).slice(0,100):[]};localStorage.setItem(WORK_STORE,JSON.stringify(workData))}
+  if(Array.isArray(obj.notes)){notes=obj.notes.filter(x=>x&&typeof x.text==='string').slice(0,500);localStorage.setItem(NOTE_STORE,JSON.stringify(notes))}
+  if(Array.isArray(obj.calendar)){calendarEvents=obj.calendar.filter(x=>x&&typeof x.title==='string'&&typeof x.date==='string').slice(0,2000);localStorage.setItem(CALENDAR_STORE,JSON.stringify(calendarEvents))}
+  data=restored;localStorage.setItem(STORE,JSON.stringify(data));render();drawWorkbench();drawNotes();drawCalendar();
+  if(['zh-CN','en','ja','ko','es','fr'].includes(obj.language)){localStorage.setItem('xg-prime-language',obj.language);$('settingsLanguage').value=obj.language}
+  if(obj.theme==='light'||obj.theme==='dark'){localStorage.setItem('xg-prime-theme',obj.theme);(obj.theme==='light'?$('themeLight'):$('themeDark')).click()}
+  alert('数据已恢复。'); 
+ }catch(err){alert(err&&err.message?err.message:'导入失败，请检查备份文件。')}
+ e.target.value='';
+};
+$('reset').onclick=()=>{if(!confirm('确定清空本机保存的 XG Prime 数据吗？此操作不可撤销，请先导出备份。'))return;[STORE,LEGACY_STORE,'xg-prime-data','xg-prime-workbench-v1','xg-prime-notes-v1','xg-prime-calendar-v1','xg-prime-language'].forEach(k=>localStorage.removeItem(k));location.reload()};
 render();if(typeof applyLanguage==='function'&&typeof currentLanguage!=='undefined')applyLanguage(currentLanguage);
 if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
 </script><script>
