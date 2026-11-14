@@ -378,13 +378,13 @@ function go(id){document.querySelectorAll('.page').forEach(p=>p.classList.toggle
 document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>go(b.dataset.tab));
 document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>go(b.dataset.go));
 
-function openToolWorkspace(key){const catalog=$('toolCatalog'),detail=$('toolDetail');if(!catalog||!detail)return;catalog.hidden=true;detail.hidden=false;document.querySelectorAll('.tool-section').forEach(x=>x.classList.toggle('tool-active',x.dataset.toolSection===key));const meta={calc:['计算与换算','科学计算器与多类别单位换算'],focus:['专注计时','番茄专注与休息计时器'],language:['语言工具','离线英汉词汇查询'],browser:['浏览与搜索','网址直达与网页搜索'],notes:['快速备忘','本地记录、搜索与置顶']};$('toolDetailTitle').textContent=(meta[key]||['工具','完整操作界面'])[0];$('toolDetailDesc').textContent=(meta[key]||['',''])[1];go('tools');}
+function openToolWorkspace(key){const catalog=$('toolCatalog'),detail=$('toolDetail');if(!catalog||!detail)return;catalog.hidden=true;detail.hidden=false;document.querySelectorAll('.tool-section').forEach(x=>x.classList.toggle('tool-active',x.dataset.toolSection===key));const meta={calc:['计算与换算','科学计算器与多类别单位换算'],focus:['专注计时','番茄专注与休息计时器'],language:['语言工具','离线英汉词汇查询'],browser:['浏览与搜索','网址直达与网页搜索'],notes:['快速备忘','本地记录、搜索与置顶'],calendar:['日历中心','月历视图与日程管理']};$('toolDetailTitle').textContent=(meta[key]||['工具','完整操作界面'])[0];$('toolDetailDesc').textContent=(meta[key]||['',''])[1];go('tools');if(key==='calendar')drawCalendar();}
 function closeToolWorkspace(){if($('toolDetail'))$('toolDetail').hidden=true;if($('toolCatalog'))$('toolCatalog').hidden=false;document.querySelectorAll('.tool-section').forEach(x=>x.classList.remove('tool-active'))}
 $('toolBack').onclick=closeToolWorkspace;
 document.querySelectorAll('[data-open-tool]').forEach(b=>b.addEventListener('click',()=>openToolWorkspace(b.dataset.openTool)));
-function openCenter(id){if(id==='me-data'){go('me');openMeView('data');return}go(id)}
+function openCenter(id){if(id==='me-data'){go('me');openMeView('data');return}if(id==='calendar'){openToolWorkspace('calendar');return}go(id)}
 document.querySelectorAll('[data-center]').forEach(b=>b.addEventListener('click',()=>openCenter(b.dataset.center)));
-document.querySelectorAll('[data-home-tool]').forEach(b=>b.addEventListener('click',()=>{const map={finance:'money',calendar:'workspace',learning:'learn',data:'me-data'};openCenter(map[b.dataset.homeTool]||'tools')}));
+document.querySelectorAll('[data-home-tool]').forEach(b=>b.addEventListener('click',()=>{const map={finance:'money',calendar:'calendar',learning:'learn',data:'me-data'};openCenter(map[b.dataset.homeTool]||'tools')}));
 document.querySelectorAll('[data-tool]').forEach(b=>b.addEventListener('click',()=>{const key=b.dataset.tool==='calculator'?'calc':b.dataset.tool==='translate'?'language':b.dataset.tool;openToolWorkspace(key)}));
 function openMeView(view){$('meMenu').hidden=true;$('meFeedbackView').hidden=view!=='feedback';$('meDataView').hidden=view!=='data';$('meSettingsView').hidden=view!=='settings'}
 document.querySelectorAll('[data-me-view]').forEach(b=>b.addEventListener('click',()=>openMeView(b.dataset.meView)));
@@ -466,6 +466,26 @@ $('feedbackCopy').onclick=async()=>{
  try{await navigator.clipboard.writeText(item.title+'\n\n'+item.body);$('feedbackStatus').textContent='反馈内容已复制。';}
  catch(e){$('feedbackStatus').textContent='无法自动复制，请使用“前往提交反馈”打开 GitHub 页面。';}
 };
+/* Monthly calendar and local schedule records. */
+const CALENDAR_STORE='xg-prime-calendar-v1';let calendarEvents=[];let calendarView=new Date();let calendarSelected=(function(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')})();
+try{const saved=JSON.parse(localStorage.getItem(CALENDAR_STORE)||'[]');if(Array.isArray(saved))calendarEvents=saved.filter(x=>x&&typeof x.title==='string'&&typeof x.date==='string')}catch(e){calendarEvents=[]}
+function localDateKey(y,m,d){return y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0')}
+function drawCalendar(){
+ const y=calendarView.getFullYear(),m=calendarView.getMonth(),first=new Date(y,m,1),days=new Date(y,m+1,0).getDate();
+ $('calMonthTitle').textContent=y+'年'+(m+1)+'月';
+ const labels=['日','一','二','三','四','五','六'];let html=labels.map(x=>'<span class="calendar-weekday">'+x+'</span>').join('');
+ for(let i=0;i<first.getDay();i++)html+='<span class="calendar-empty"></span>';
+ for(let d=1;d<=days;d++){const key=localDateKey(y,m,d),count=calendarEvents.filter(x=>x.date===key).length;html+='<button type="button" class="calendar-day '+(key===calendarSelected?'selected':'')+'" data-cal-date="'+key+'"><span>'+d+'</span>'+(count?'<i>'+count+'</i>':'')+'</button>'}
+ $('calGrid').innerHTML=html;$('calDate').value=calendarSelected;
+ const filter=$('calFilter').value,items=calendarEvents.slice().sort((a,b)=>(a.date+(a.time||'')).localeCompare(b.date+(b.time||''))).filter(x=>filter==='all'||(filter==='done'?x.done:filter==='upcoming'?!x.done:x.date===calendarSelected));
+ $('calList').innerHTML=items.map(x=>'<div class="listrow"><span>'+safe(x.title)+'<small class="muted" style="display:block">'+safe(x.date)+' '+safe(x.time||'')+' '+safe(x.note||'')+'</small></span><button class="btn secondary" data-cal-done="'+x.id+'">'+(x.done?'撤销':'完成')+'</button><button class="btn danger" data-cal-del="'+x.id+'">删除</button></div>').join('')||'<p class="muted">这一天暂无日程。</p>';
+}
+$('calPrev').onclick=()=>{calendarView.setMonth(calendarView.getMonth()-1);drawCalendar()};
+$('calNext').onclick=()=>{calendarView.setMonth(calendarView.getMonth()+1);drawCalendar()};
+$('calGrid').onclick=e=>{const key=e.target.closest('[data-cal-date]')?.dataset.calDate;if(!key)return;calendarSelected=key;const p=key.split('-').map(Number);calendarView=new Date(p[0],p[1]-1,1);drawCalendar()};
+$('calFilter').onchange=drawCalendar;
+$('calAdd').onclick=()=>{const title=$('calTitle').value.trim(),date=$('calDate').value;if(!title||!date){$('calTitle').focus();return}calendarEvents.push({id:String(Date.now())+String(Math.floor(Math.random()*1000)),title,date,time:$('calTime').value,note:$('calNote').value.trim(),done:false});localStorage.setItem(CALENDAR_STORE,JSON.stringify(calendarEvents));calendarSelected=date;const p=date.split('-').map(Number);calendarView=new Date(p[0],p[1]-1,1);$('calTitle').value='';$('calNote').value='';drawCalendar()};
+$('calList').onclick=e=>{const done=e.target.dataset.calDone,del=e.target.dataset.calDel;if(done){const item=calendarEvents.find(x=>String(x.id)===done);if(item)item.done=!item.done}else if(del)calendarEvents=calendarEvents.filter(x=>String(x.id)!==del);localStorage.setItem(CALENDAR_STORE,JSON.stringify(calendarEvents));drawCalendar()};
 render();if(typeof applyLanguage==='function'&&typeof currentLanguage!=='undefined')applyLanguage(currentLanguage);
 if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
 </script><script>
