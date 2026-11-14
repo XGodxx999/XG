@@ -849,12 +849,95 @@ const textOriginal=new WeakMap(), textRendered=new WeakMap();
 const attrOriginal=new WeakMap(), attrRendered=new WeakMap();
 const attrNames=['placeholder','aria-label','alt','title'];
 const skipSelector='script,style,noscript,textarea,pre,code,[contenteditable="true"],[data-no-translate]';
+// Native English UI strings: map them as well as Chinese source strings.
+// Array order: zh-CN, en, ja, ko, es, fr.
+const E={
+'PLAN · LEARN · GROW':['规划 · 学习 · 成长','PLAN · LEARN · GROW','計画 · 学習 · 成長','계획 · 학습 · 성장','PLANIFICAR · APRENDER · CRECER','PLANIFIER · APPRENDRE · ÉVOLUER'],
+'YOUR PERSONAL COMMAND CENTER':['你的个人指挥中心','YOUR PERSONAL COMMAND CENTER','あなたのパーソナル司令室','나만의 개인 대시보드','TU CENTRO DE CONTROL PERSONAL','VOTRE CENTRE DE COMMANDE PERSONNEL'],
+'Aim Higher.':['设定更高目标。','Aim Higher.','より高い目標へ。','더 높은 목표를 향해.','Apunta más alto.','Visez plus haut.'],
+'Finance':['财务','Finance','財務','재무','Finanzas','Finances'],
+'Track · Invest · Grow':['记录 · 投资 · 增长','Track · Invest · Grow','記録 · 投資 · 成長','기록 · 투자 · 성장','Registra · invierte · crece','Suivre · investir · progresser'],
+'Learn':['学习','Learn','学習','학습','Aprender','Apprendre'],
+'Skills · English · Future':['技能 · 英语 · 未来','Skills · English · Future','スキル · 英語 · 未来','기술 · 영어 · 미래','Habilidades · inglés · futuro','Compétences · anglais · avenir'],
+'Career':['职业','Career','キャリア','진로','Carrera','Carrière'],
+'Jobs · Migration':['求职 · 移居','Jobs · Migration','仕事 · 移住','취업 · 이주','Empleo · migración','Emploi · migration'],
+'Tools':['工具','Tools','ツール','도구','Herramientas','Outils'],
+'Useful Utilities':['实用工具','Useful Utilities','便利なツール','유용한 도구','Utilidades prácticas','Outils pratiques'],
+'TODAY · GOALS':['今日 · 目标','TODAY · GOALS','今日 · 目標','오늘 · 목표','HOY · OBJETIVOS','AUJOURD’HUI · OBJECTIFS'],
+'More possibilities, a greater future.':['更多可能，更广阔的未来。','More possibilities, a greater future.','可能性を広げ、未来を切り開く。','더 많은 가능성, 더 큰 미래.','Más posibilidades, un futuro mejor.','Plus de possibilités, un avenir meilleur.'],
+'MARKET · LIVE':['市场 · 动态','MARKET · LIVE','市場 · ライブ','시장 · 실시간','MERCADO · EN VIVO','MARCHÉ · EN DIRECT'],
+'TOTAL INCOME':['总收入','TOTAL INCOME','総収入','총수입','INGRESOS TOTALES','REVENUS TOTAUX'],
+'TOTAL EXPENSE':['总支出','TOTAL EXPENSE','総支出','총지출','GASTOS TOTALES','DÉPENSES TOTALES'],
+'Quick Access':['快捷入口','Quick Access','クイックアクセス','빠른 실행','Acceso rápido','Accès rapide'],
+'Browser':['浏览器','Browser','ブラウザー','브라우저','Navegador','Navigateur'],
+'Translate':['翻译','Translate','翻訳','번역','Traducir','Traduire'],
+'Calculator':['计算器','Calculator','電卓','계산기','Calculadora','Calculatrice'],
+'More':['更多','More','もっと見る','더 보기','Más','Plus'],
+'YOUR CENTERS':['功能中心','YOUR CENTERS','各センター','주요 센터','TUS CENTROS','VOS ESPACES'],
+'YOUR NEXT STEP':['下一步行动','YOUR NEXT STEP','次のステップ','다음 단계','TU SIGUIENTE PASO','VOTRE PROCHAINE ÉTAPE'],
+'DREAM BIGGER':['设定更大的目标','DREAM BIGGER','もっと大きな夢を','더 큰 꿈을 꾸세요','SUEÑA EN GRANDE','VOYEZ PLUS GRAND'],
+'DISCOVER YOUR POTENTIAL':['发现你的潜力','DISCOVER YOUR POTENTIAL','自分の可能性を見つけよう','잠재력을 발견하세요','DESCUBRE TU POTENCIAL','DÉCOUVREZ VOTRE POTENTIEL'],
+'Explore':['探索','Explore','探す','탐색','Explorar','Explorer'],
+'CALENDAR':['日历','CALENDAR','カレンダー','캘린더','CALENDARIO','CALENDRIER'],
+'Personal Workbench':['个人工作台','Personal Workbench','パーソナルワークスペース','개인 작업 공간','Espacio personal','Espace personnel'],
+'LEARN & GROW':['学习与成长','LEARN & GROW','学びと成長','학습 및 성장','APRENDER Y CRECER','APPRENDRE ET ÉVOLUER'],
+'English Learning':['英语学习','English Learning','英語学習','영어 학습','Aprendizaje de inglés','Apprentissage de l’anglais'],
+'Career Path':['职业路线','Career Path','キャリアパス','진로 경로','Trayectoria profesional','Parcours professionnel'],
+'FINANCE':['财务','FINANCE','財務','재무','FINANZAS','FINANCES'],
+'Market Overview':['市场概览','Market Overview','市場概要','시장 개요','Resumen del mercado','Aperçu du marché'],
+'TOOLS & DATA':['工具与数据','TOOLS & DATA','ツールとデータ','도구 및 데이터','HERRAMIENTAS Y DATOS','OUTILS ET DONNÉES'],
+'Utilities':['实用工具','Utilities','ユーティリティ','유틸리티','Utilidades','Utilitaires'],
+'My Space':['我的空间','My Space','マイスペース','내 공간','Mi espacio','Mon espace'],
+'PERSONAL COMMAND CENTER':['个人指挥中心','PERSONAL COMMAND CENTER','パーソナル司令室','개인 대시보드','CENTRO DE CONTROL PERSONAL','CENTRE DE COMMANDE PERSONNEL'],
+'TASKS · TODAY':['任务 · 今日','TASKS · TODAY','タスク · 今日','작업 · 오늘','TAREAS · HOY','TÂCHES · AUJOURD’HUI'],
+'HABITS · STREAK':['习惯 · 连续记录','HABITS · STREAK','習慣 · 継続記録','습관 · 연속 기록','HÁBITOS · RACHA','HABITUDES · SÉRIE'],
+'BUILD YOUR ROUTINE':['建立你的日常节奏','BUILD YOUR ROUTINE','毎日の習慣を作る','나만의 루틴 만들기','CREA TU RUTINA','CRÉEZ VOTRE ROUTINE'],
+'MY GOALS':['我的目标','MY GOALS','自分の目標','내 목표','MIS OBJETIVOS','MES OBJECTIFS'],
+'SMALL STEPS, BIG PROGRESS':['小步前进，持续进步','SMALL STEPS, BIG PROGRESS','小さな一歩が大きな進歩に','작은 걸음, 큰 발전','PEQUEÑOS PASOS, GRANDES AVANCES','PETITS PAS, GRANDS PROGRÈS'],
+'WORD OF THE DAY':['每日单词','WORD OF THE DAY','今日の単語','오늘의 단어','PALABRA DEL DÍA','MOT DU JOUR'],
+'KNOW WHERE IT GOES':['清楚了解每笔收支','KNOW WHERE IT GOES','お金の流れを把握する','자금 흐름 파악하기','TEN CLARO A DÓNDE VA','SACHEZ OÙ VA VOTRE ARGENT'],
+'OVERVIEW':['概览','OVERVIEW','概要','개요','RESUMEN','APERÇU'],
+'INCOME':['收入','INCOME','収入','수입','INGRESOS','REVENUS'],
+'EXPENSE':['支出','EXPENSE','支出','지출','GASTOS','DÉPENSES'],
+'MARKET':['市场','MARKET','市場','시장','MERCADO','MARCHÉ'],
+'INVESTMENTS':['投资','INVESTMENTS','投資','투자','INVERSIONES','INVESTISSEMENTS'],
+'RECORD':['记录','RECORD','記録','기록','REGISTRAR','ENREGISTRER'],
+'BUILD REAL-WORLD SKILLS':['培养实用技能','BUILD REAL-WORLD SKILLS','実践的なスキルを身につける','실무 능력 키우기','DESARROLLA HABILIDADES PRÁCTICAS','DÉVELOPPEZ DES COMPÉTENCES PRATIQUES'],
+'SKILLS':['技能','SKILLS','スキル','기술','HABILIDADES','COMPÉTENCES'],
+'XG TOOLBOX':['XG 工具箱','XG TOOLBOX','XG ツールボックス','XG 도구 상자','CAJA DE HERRAMIENTAS XG','BOÎTE À OUTILS XG'],
+'MANAGEMENT':['管理','MANAGEMENT','管理','관리','GESTIÓN','GESTION'],
+'PRODUCTIVITY':['效率','PRODUCTIVITY','生産性','생산성','PRODUCTIVIDAD','PRODUCTIVITÉ'],
+'TOOL WORKSPACE':['工具工作区','TOOL WORKSPACE','ツールワークスペース','도구 작업 공간','ESPACIO DE HERRAMIENTAS','ESPACE OUTILS'],
+'FOCUS':['专注','FOCUS','集中','집중','ENFOQUE','CONCENTRATION'],
+'LANGUAGE':['语言','LANGUAGE','言語','언어','IDIOMA','LANGUE'],
+'CALCULATOR & CONVERTER':['计算器与换算','CALCULATOR & CONVERTER','計算・換算','계산 및 변환','CALCULADORA Y CONVERSOR','CALCULATRICE ET CONVERTISSEUR'],
+'BROWSER':['浏览器','BROWSER','ブラウザー','브라우저','NAVEGADOR','NAVIGATEUR'],
+'NOTES · LOCAL':['备忘 · 本地','NOTES · LOCAL','メモ · ローカル','메모 · 로컬','NOTAS · LOCALES','NOTES · LOCALES'],
+'CALENDAR & SCHEDULE':['日历与日程','CALENDAR & SCHEDULE','カレンダーと予定','달력 및 일정','CALENDARIO Y AGENDA','CALENDRIER ET PLANNING'],
+'BACKUP & PRIVACY':['备份与隐私','BACKUP & PRIVACY','バックアップとプライバシー','백업 및 개인정보','COPIA Y PRIVACIDAD','SAUVEGARDE ET CONFIDENTIALITÉ'],
+'DEVELOPER':['开发者','DEVELOPER','開発者','개발자','DESARROLLADOR','DÉVELOPPEUR'],
+'LIVE EXCHANGE RATES':['实时参考汇率','LIVE EXCHANGE RATES','最新為替レート','실시간 환율','TIPOS DE CAMBIO','TAUX DE CHANGE'],
+'IMAGE & CREATION':['图片与创作','IMAGE & CREATION','画像と制作','이미지 및 제작','IMAGEN Y CREACIÓN','IMAGE ET CRÉATION'],
+'YOUR SPACE':['你的空间','YOUR SPACE','あなたのスペース','나의 공간','TU ESPACIO','VOTRE ESPACE'],
+'FEEDBACK':['反馈','FEEDBACK','フィードバック','피드백','COMENTARIOS','COMMENTAIRES'],
+'DATA CENTER':['数据中心','DATA CENTER','データセンター','데이터 센터','CENTRO DE DATOS','CENTRE DE DONNÉES'],
+'DATA':['数据','DATA','データ','데이터','DATOS','DONNÉES'],
+'SETTINGS':['设置','SETTINGS','設定','설정','AJUSTES','PARAMÈTRES'],
+'Language':['语言','Language','言語','언어','Idioma','Langue']
+};
+const englishSources=Object.keys(E).sort((a,b)=>b.length-a.length);
 const sources=Object.keys(D).sort((a,b)=>b.length-a.length);
 function translateText(value){
- if(typeof value!=='string'||!value||lang==='zh-CN')return value;
+ if(typeof value!=='string'||!value)return value;
  const index=langOrder.indexOf(lang);
- if(Object.prototype.hasOwnProperty.call(D,value)&&D[value]&&D[value][index])return D[value][index];
+ const localeIndex=lang==='zh-CN'?0:index+1;
+ if(Object.prototype.hasOwnProperty.call(E,value)&&E[value]&&E[value][localeIndex])return E[value][localeIndex];
  let out=value;
+ for(const src of englishSources){
+  const dest=E[src]&&E[src][localeIndex];
+  if(dest)out=out.split(src).join(dest);
+ }
+ if(lang==='zh-CN')return out;
  for(const src of sources){
   if(src.length<3)continue;
   const dest=D[src]&&D[src][index];
