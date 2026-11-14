@@ -1,0 +1,1 @@
+# XG Prime\n\nPLAN · LEARN · GROW. A personal command center.\n\nIncludes daily goals, beginner English vocabulary, manual income/expense tracking, HVAC learning checklist, local browser storage and offline caching.\n\nData stays in this browser's localStorage. Export or sync is not included in this lightweight release.\n
