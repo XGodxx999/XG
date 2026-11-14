@@ -577,6 +577,60 @@ $('codecCopy').onclick=async()=>{try{await navigator.clipboard.writeText($('code
 $('uuidGenerate').onclick=()=>{$('uuidOutput').value=crypto.randomUUID?crypto.randomUUID():'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{const r=Math.random()*16|0;return(c==='x'?r:(r&3|8)).toString(16)})};
 $('uuidCopy').onclick=async()=>{try{await navigator.clipboard.writeText($('uuidOutput').value)}catch(e){}};
 $('exchangeRun').onclick=async()=>{const from=$('exchangeFrom').value,to=$('exchangeTo').value,amount=Number($('exchangeAmount').value);if(!(amount>=0)){$('exchangeResult').textContent='请输入有效金额';return}if(from===to){$('exchangeResult').textContent=amount.toFixed(2)+' '+to;$('exchangeUpdated').textContent='同币种，无需换算';return}$('exchangeResult').textContent='正在获取汇率…';try{const res=await fetch('https://api.frankfurter.app/latest?from='+encodeURIComponent(from)+'&to='+encodeURIComponent(to));if(!res.ok)throw new Error('汇率服务暂不可用');const d=await res.json(),rate=d.rates[to];if(!Number.isFinite(rate))throw new Error('未返回该币种汇率');$('exchangeResult').textContent=(amount*rate).toLocaleString(undefined,{maximumFractionDigits:4})+' '+to;$('exchangeUpdated').textContent='参考汇率：1 '+from+' = '+rate+' '+to+' · 日期：'+d.date}catch(e){$('exchangeResult').textContent='查询失败：'+e.message;$('exchangeUpdated').textContent='请检查网络后重试'}};
+
+/* Calculator, unit conversion and focus timer: wired to their visible controls. */
+(()=>{
+ const $=id=>document.getElementById(id);
+ const expr=$('calcExpression'),result=$('calcResult');
+ function evaluateExpression(source){
+  const tokens=source.replace(/[×]/g,'*').replace(/[÷]/g,'/').replace(/[−]/g,'-').replace(/\bpi\b/gi,'pi').match(/(?:\d+(?:\.\d*)?|\.\d+|pi|sqrt|sin|cos|tan|log|abs|[()+\-*/^])/gi);
+  if(!tokens||tokens.join('')!==source.replace(/\s+/g,'').replace(/[×÷−]/g,c=>({'×':'*','÷':'/','−':'-'}[c])).replace(/\bPI\b/gi,'pi'))throw Error('表达式含有不支持的字符');
+  let i=0;
+  const peek=()=>tokens[i],take=()=>tokens[i++];
+  function primary(){
+   const t=take();if(t===undefined)throw Error('表达式不完整');
+   if(t==='+')return primary();if(t==='-')return -primary();
+   if(t==='('){const v=add();if(take()!==')')throw Error('括号不匹配');return v}
+   if(t==='pi')return Math.PI;
+   if(['sin','cos','tan','sqrt','log','abs'].includes(t.toLowerCase())){if(take()!=='(')throw Error('函数后需要括号');const v=add();if(take()!==')')throw Error('函数括号不匹配');const fn=t.toLowerCase();return fn==='sin'?Math.sin(v*Math.PI/180):fn==='cos'?Math.cos(v*Math.PI/180):fn==='tan'?Math.tan(v*Math.PI/180):fn==='sqrt'?Math.sqrt(v):fn==='log'?Math.log10(v):Math.abs(v)}
+   if(!/^(?:\d+(?:\.\d*)?|\.\d+)$/.test(t))throw Error('无法识别：'+t);return Number(t);
+  }
+  function power(){let v=primary();if(peek()==='^'){take();v=Math.pow(v,power())}return v}
+  function mul(){let v=power();while(peek()==='*'||peek()==='/'){const op=take(),r=power();v=op==='*'?v*r:v/r}return v}
+  function add(){let v=mul();while(peek()==='+'||peek()==='-'){const op=take(),r=mul();v=op==='+'?v+r:v-r}return v}
+  const value=add();if(i!==tokens.length)throw Error('表达式格式不正确');if(!Number.isFinite(value))throw Error('结果不是有效数字');return value;
+ }
+ function calculate(){try{const v=evaluateExpression(expr.value);result.textContent=Number(v.toPrecision(12)).toLocaleString('zh-CN',{maximumFractionDigits:10})}catch(e){result.textContent=e.message}}
+ if($('calculate'))$('calculate').onclick=calculate;
+ if($('calcClear'))$('calcClear').onclick=()=>{expr.value='';result.textContent='结果显示在这里';expr.focus()};
+ if(expr)expr.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();calculate()}});
+ document.querySelectorAll('[data-calc-insert]').forEach(b=>b.onclick=()=>{const v=b.dataset.calcInsert==='pi'?'pi':b.dataset.calcInsert;const a=expr.selectionStart??expr.value.length,z=expr.selectionEnd??a;expr.value=expr.value.slice(0,a)+v+expr.value.slice(z);expr.focus();expr.setSelectionRange(a+v.length,a+v.length)});
+ const units={
+  length:{'米':1,'千米':1000,'厘米':.01,'毫米':.001,'英寸':.0254,'英尺':.3048,'英里':1609.344},
+  weight:{'千克':1,'克':.001,'毫克':.000001,'吨':1000,'磅':.45359237,'盎司':.028349523125},
+  area:{'平方米':1,'平方千米':1e6,'平方厘米':.0001,'公顷':10000,'英亩':4046.8564224,'平方英尺':.09290304},
+  volume:{'升':1,'毫升':.001,'立方米':1000,'美制加仑':3.785411784,'杯（美制）':.2365882365},
+  speed:{'米/秒':1,'千米/小时':1/3.6,'英里/小时':.44704,'节':.514444},
+  time:{'秒':1,'分钟':60,'小时':3600,'天':86400,'周':604800},
+  data:{'字节':1,'KB':1024,'MB':1048576,'GB':1073741824,'TB':1099511627776}
+ };
+ const category=$('unitCategory'),from=$('unitFrom'),to=$('unitTo');
+ function fillUnits(){if(!category||!from||!to)return;const key=category.value;let names=key==='temperature'?['摄氏度','华氏度','开尔文']:Object.keys(units[key]||{});const oldFrom=from.value,oldTo=to.value;[from,to].forEach(sel=>{sel.innerHTML=names.map(n=>'<option>'+n+'</option>').join('')});from.value=names.includes(oldFrom)?oldFrom:names[0];to.value=names.includes(oldTo)&&oldTo!==from.value?oldTo:(names[1]||names[0])}
+ function convertUnits(){const v=Number($('unitValue').value);if(!Number.isFinite(v)){$('unitResult').textContent='请输入有效数值';return}const a=from.value,b=to.value;let out;
+  if(category.value==='temperature'){const c=a==='摄氏度'?v:a==='华氏度'?(v-32)*5/9:v-273.15;out=b==='摄氏度'?c:b==='华氏度'?c*9/5+32:c+273.15}
+  else{const table=units[category.value];out=v*table[a]/table[b]}
+  $('unitResult').textContent=Number(out.toPrecision(12)).toLocaleString('zh-CN',{maximumFractionDigits:10})+' '+b;
+ }
+ if(category){category.addEventListener('change',fillUnits);fillUnits()}
+ if($('unitConvert'))$('unitConvert').onclick=convertUnits;
+ if($('unitValue'))$('unitValue').addEventListener('keydown',e=>{if(e.key==='Enter')convertUnits()});
+ let focusDuration=25*60,focusEnd=0,focusFrame=0,focusRunning=false,breakMode=false;
+ function drawFocus(){const left=Math.max(0,focusEnd-Date.now()),m=Math.floor(left/60000),sec=Math.floor(left/1000)%60;$('focusDisplay').textContent=String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0');if(left<=0){focusRunning=false;focusFrame=0;$('focusStart').textContent='开始';$('focusStatus').textContent=breakMode?'休息结束':'专注完成';return}focusFrame=requestAnimationFrame(drawFocus)}
+ if($('focusStart'))$('focusStart').onclick=()=>{if(focusRunning){focusRunning=false;cancelAnimationFrame(focusFrame);focusFrame=0;$('focusStart').textContent='继续';$('focusStatus').textContent='已暂停';return}focusEnd=Date.now()+focusDuration*1000;focusRunning=true;$('focusStart').textContent='暂停';$('focusStatus').textContent=breakMode?'休息计时中':'专注计时中';drawFocus()};
+ if($('focusReset'))$('focusReset').onclick=()=>{focusRunning=false;cancelAnimationFrame(focusFrame);focusFrame=0;$('focusDisplay').textContent=String(Math.floor(focusDuration/60)).padStart(2,'0')+':00';$('focusStart').textContent='开始';$('focusStatus').textContent='已重置'};
+ if($('focusMode'))$('focusMode').onclick=()=>{focusRunning=false;cancelAnimationFrame(focusFrame);focusFrame=0;breakMode=!breakMode;focusDuration=breakMode?5*60:25*60;$('focusMode').textContent=breakMode?'切换专注 25 分钟':'切换休息 5 分钟';$('focusDisplay').textContent=breakMode?'05:00':'25:00';$('focusStart').textContent='开始';$('focusStatus').textContent=breakMode?'准备休息':'准备开始专注'};
+})();
+
 // Feedback is composed locally; GitHub submission requires the user's confirmation.
 function buildFeedbackBody(){
  const type=$('feedbackType').value,title=$('feedbackTitle').value.trim(),detail=$('feedbackDetail').value.trim(),device=$('feedbackDevice').value.trim();
