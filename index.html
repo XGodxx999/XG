@@ -22,10 +22,36 @@ button,input,select{font:inherit}button{cursor:pointer;color:inherit}.shell{max-
 .bottomnav{position:fixed;z-index:10;left:0;right:0;bottom:0;padding:9px 14px calc(9px + env(safe-area-inset-bottom));background:#080a0deF;border-top:1px solid #2b333e;backdrop-filter:blur(20px)}.navinner{max-width:720px;margin:auto;display:grid;grid-template-columns:repeat(4,1fr);gap:7px}.navbtn{border:1px solid transparent;background:transparent;color:#87919e;border-radius:14px;padding:8px 3px;font-size:10px;display:flex;flex-direction:column;align-items:center;gap:2px}.navbtn b{font-size:19px;font-weight:500}.navbtn.active{background:linear-gradient(145deg,#dfe5ec,#9da9b7);color:#080b10;box-shadow:0 4px 18px #b9c7d522}
 .toolgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.toolbox{border:1px solid var(--line);border-radius:17px;background:#10151c;padding:15px}.toolbox h3{font-size:14px;margin:0 0 10px}.result{font-size:20px;font-weight:750;margin-top:10px}.note{font-size:11px;color:#788492;line-height:1.65}.profile{display:flex;align-items:center;gap:15px;padding:18px}.avatar{width:68px;height:68px;flex:0 0 68px;border-radius:20px;border:1px solid #8996a6;background:radial-gradient(circle at 30% 20%,#394554,#0a0d12 72%);display:grid;place-items:center;box-shadow:inset 0 1px 8px #ffffff22,0 0 28px #cbd8e522;overflow:hidden}.avatar svg{width:54px;height:54px;filter:drop-shadow(0 2px 8px #dce7f355}
 @media(min-width:600px){.hero{min-height:340px;padding:34px}.hero:before{width:350px;height:350px;right:-20px}.hero:after{right:-45px}.heroLogo{width:270px}.shortcut{min-height:135px}}
+
+/* XG Prime 3.0 — Liquid Glass system */
+:root{--bg:#070a10;--panel:rgba(255,255,255,.075);--panel2:rgba(255,255,255,.11);--line:rgba(226,237,250,.17);--muted:#a8b4c3;--white:#f5f8fc;--silver:#dce6f2;--glass-shadow:0 18px 55px rgba(0,0,0,.32),inset 0 1px 0 rgba(255,255,255,.17)}
+body{background:radial-gradient(ellipse at 12% 0%,rgba(91,125,164,.28),transparent 38%),radial-gradient(ellipse at 90% 35%,rgba(83,102,139,.2),transparent 36%),linear-gradient(145deg,#070a10,#0c111b 48%,#05070b);background-attachment:fixed}
+.topbar{position:sticky;top:0;z-index:20;margin:0 -17px;padding:0 17px;background:rgba(8,12,19,.58);backdrop-filter:blur(28px) saturate(180%);-webkit-backdrop-filter:blur(28px) saturate(180%);border-bottom:1px solid rgba(255,255,255,.08)}
+.hero,.card,.panel,.shortcut,.toolbox{background:linear-gradient(145deg,rgba(255,255,255,.13),rgba(255,255,255,.045));border:1px solid rgba(231,241,255,.17);box-shadow:var(--glass-shadow);backdrop-filter:blur(24px) saturate(155%);-webkit-backdrop-filter:blur(24px) saturate(155%)}
+.hero{background:radial-gradient(ellipse at 75% 28%,rgba(158,185,220,.17),transparent 34%),linear-gradient(145deg,rgba(255,255,255,.15),rgba(255,255,255,.035));border-radius:30px}
+.hero:before{opacity:.72}.hero:after{opacity:.72}
+.card,.panel,.toolbox{border-radius:23px}
+.shortcut{border-radius:22px;transition:transform .2s,border-color .2s,background .2s}
+.shortcut:active,.btn:active,.iconbtn:active{transform:scale(.975)}
+.field{background:rgba(3,7,13,.42);border:1px solid rgba(225,238,255,.2);backdrop-filter:blur(15px);-webkit-backdrop-filter:blur(15px)}
+.field:focus{border-color:rgba(201,224,255,.75);box-shadow:0 0 0 3px rgba(154,190,235,.12)}
+.btn{background:linear-gradient(135deg,rgba(238,245,255,.94),rgba(164,184,210,.88));box-shadow:0 7px 22px rgba(0,0,0,.2),inset 0 1px rgba(255,255,255,.7)}
+.btn.secondary{background:rgba(226,237,250,.09);border-color:rgba(225,238,255,.2);color:#eef4fc;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
+.btn.danger{background:rgba(130,54,70,.22);border-color:rgba(255,150,170,.28);color:#ffd9e0}
+.iconbtn{background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.18);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
+.bottomnav{background:rgba(9,13,21,.64);border-top:1px solid rgba(225,238,255,.15);backdrop-filter:blur(32px) saturate(180%);-webkit-backdrop-filter:blur(32px) saturate(180%);box-shadow:0 -12px 38px rgba(0,0,0,.22)}
+.navbtn.active{background:linear-gradient(135deg,rgba(245,249,255,.95),rgba(174,193,219,.86));box-shadow:0 5px 24px rgba(181,207,241,.2),inset 0 1px rgba(255,255,255,.8)}
+.progressTrack{background:rgba(255,255,255,.13)}.progressFill{background:linear-gradient(90deg,#8caed5,#f2f7ff)}
+.featureIcon,.avatar{background:linear-gradient(145deg,rgba(210,227,250,.2),rgba(255,255,255,.045));border:1px solid rgba(230,241,255,.17)}
+.langselect{width:76px;height:36px;padding:0 8px;border-radius:12px;color:#edf4ff;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.2);font-size:11px;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
+.langselect option{background:#101722;color:#fff}
+@supports not ((backdrop-filter:blur(2px)) or (-webkit-backdrop-filter:blur(2px))){.hero,.card,.panel,.shortcut,.toolbox,.bottomnav,.topbar{background:#151c27}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
+
 </style></head>
 <body>
 <div class="shell">
-<header class="topbar"><div class="brandlock"><svg class="brandmark" viewBox="0 0 100 100" aria-label="XG"><path d="M13 20h18l56 60H69z" fill="#eef2f6"/><path d="M87 20H69L12 80h18z" fill="#b9c5d2"/><path d="M58 20h29L58 43 45 31z" fill="#fff"/></svg><div><div class="brandname">XG PRIME</div><div class="tagline">PLAN · LEARN · GROW</div></div></div><button class="iconbtn" id="profileShortcut" aria-label="个人中心">⌘</button></header>
+<header class="topbar"><div class="brandlock"><svg class="brandmark" viewBox="0 0 100 100" aria-label="XG"><path d="M13 20h18l56 60H69z" fill="#eef2f6"/><path d="M87 20H69L12 80h18z" fill="#b9c5d2"/><path d="M58 20h29L58 43 45 31z" fill="#fff"/></svg><div><div class="brandname">XG PRIME</div><div class="tagline">PLAN · LEARN · GROW</div></div></div><div style="display:flex;align-items:center;gap:9px"><select id="languageSelect" class="langselect" aria-label="Language"><option value="zh-CN">中文</option><option value="en">EN</option><option value="ja">日本語</option><option value="ko">한국어</option><option value="es">ES</option><option value="fr">FR</option></select><button class="iconbtn" id="profileShortcut" aria-label="个人中心">⌘</button></div></header>
 
 <main>
 <section id="home" class="page active">
@@ -54,10 +80,11 @@ button,input,select{font:inherit}button{cursor:pointer;color:inherit}.shell{max-
 </div>
 <nav class="bottomnav"><div class="navinner"><button class="navbtn active" data-tab="home"><b>⌂</b>首页</button><button class="navbtn" data-tab="explore"><b>◇</b>探索</button><button class="navbtn" data-tab="tools"><b>⌘</b>工具</button><button class="navbtn" data-tab="me"><b>◉</b>我的</button></div></nav>
 <script>
-const $=id=>document.getElementById(id),STORE='xg-prime-data-v2';
+const $=id=>document.getElementById(id),STORE='xg-prime-data-v3',LEGACY_STORE='xg-prime-data-v2';
 let data={goals:[],tx:[],career:[]};
-try{const old=JSON.parse(localStorage.getItem(STORE)||localStorage.getItem('xg-prime-data')||'{}');data={...data,...old};}catch(e){}
-const save=()=>{localStorage.setItem(STORE,JSON.stringify(data));render()};
+function loadData(){try{const raw=localStorage.getItem(STORE)||localStorage.getItem(LEGACY_STORE)||localStorage.getItem('xg-prime-data');const old=raw?JSON.parse(raw):{};return{goals:Array.isArray(old.goals)?old.goals:[],tx:Array.isArray(old.tx)?old.tx:[],career:Array.isArray(old.career)?old.career:[]}}catch(e){console.warn('Local data could not be read',e);return{goals:[],tx:[],career:[]}}}
+data=loadData();
+const save=()=>{try{localStorage.setItem(STORE,JSON.stringify(data));render()}catch(e){alert('本机存储空间不足，请先导出备份')}};
 const money=n=>'¥'+Number(n||0).toFixed(2);
 const safe=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function render(){
@@ -92,6 +119,21 @@ $('export').onclick=()=>{const blob=new Blob([JSON.stringify(data,null,2)],{type
 $('importBtn').onclick=()=>$('importFile').click();
 $('importFile').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const obj=JSON.parse(await f.text());if(!obj||!Array.isArray(obj.goals)||!Array.isArray(obj.tx))throw Error();data={goals:obj.goals,tx:obj.tx,career:Array.isArray(obj.career)?obj.career:[]};save();alert('数据已恢复')}catch(err){alert('文件格式不正确，无法导入')}e.target.value=''};
 $('reset').onclick=()=>{if(confirm('确定清空本机所有 XG Prime 数据？建议先导出备份。')){data={goals:[],tx:[],career:[]};save()}};
-render();
+
+/* Internationalization: six interface languages; user records remain unchanged. */
+const DICT={
+'en':{'首页':'Home','探索':'Explore','工具':'Tools','我的':'My Space','已完成':'completed','每日目标':'Daily Goals','学习英语 15 分钟':'Study English for 15 minutes','添加':'Add','显示释义':'Show meaning','下一个词':'Next word','点击显示中文释义':'Tap to reveal meaning','学习建议':'Study tip','收入':'Income','支出':'Expense','保存':'Save','备注（可选）':'Note (optional)','删除':'Delete','暂无记录。':'No records yet.','还没有目标，添加第一项吧。':'No goals yet. Add your first one.','数据已恢复':'Data restored','文件格式不正确，无法导入':'Invalid backup file','导出数据':'Export data','导入数据':'Import data','导出':'Export','导入':'Import','清空本机数据':'Clear local data','数据与隐私':'Data & Privacy','确定清空本机所有 XG Prime 数据？建议先导出备份。':'Clear all local XG Prime data? Export a backup first.','了解制冷循环与基础原理':'Understand refrigeration cycles and fundamentals','学习 HVAC 常见工具与安全规范':'Learn HVAC tools and safety','学习铜管加工、焊接与保温':'Learn copper pipework, brazing and insulation','学习电气基础与控制线路':'Learn electrical basics and control circuits','练习设备安装、维护与故障排查':'Practice installation, maintenance and troubleshooting','整理培训证明与工作经历':'Organize training records and work history','把想做的事变成今天能完成的行动。':'Turn intentions into actions you can complete today.','从常用词汇开始，逐步积累。':'Build your vocabulary step by step.','记录个人收入与支出，不连接银行账户。':'Track income and expenses. No bank connection.','HVAC 学习清单 · 逐项记录进度':'HVAC learning checklist · track each step','日常计算与单位换算。':'Everyday calculations and unit conversion.','基础计算器':'Calculator','公里 / 英里':'Kilometers / Miles','计算':'Calculate','换算':'Convert','输入公里数':'Enter kilometers','金额':'Amount','计划 · 学习 · 成长':'Plan · Learn · Grow','个人中心':'Profile','显示中文释义':'Show meaning','已完成':'completed','版本':'Version'},
+'ja':{'首页':'ホーム','探索':'探索','工具':'ツール','我的':'マイページ','已完成':'完了','每日目标':'毎日の目標','添加':'追加','显示释义':'意味を表示','下一个词':'次の単語','点击显示中文释义':'タップして意味を表示','学习建议':'学習のヒント','收入':'収入','支出':'支出','保存':'保存','删除':'削除','暂无记录。':'記録はありません。','还没有目标，添加第一项吧。':'目標はまだありません。追加しましょう。','导出数据':'データを書き出す','导入数据':'データを読み込む','导出':'書き出す','导入':'読み込む','清空本机数据':'端末データを消去','数据与隐私':'データとプライバシー','添加第一项吧。':'最初の目標を追加しましょう。','学习英语 15 分钟':'英語を15分勉強','收入':'収入','支出':'支出','备注（可选）':'メモ（任意）','保存':'保存','计算':'計算','换算':'変換','基础计算器':'電卓','公里 / 英里':'キロ / マイル','输入公里数':'キロ数を入力'},
+'ko':{'首页':'홈','探索':'탐색','工具':'도구','我的':'내 공간','已完成':'완료','每日目标':'일일 목표','添加':'추가','显示释义':'뜻 보기','下一个词':'다음 단어','点击显示中文释义':'눌러서 뜻 보기','学习建议':'학습 팁','收入':'수입','支出':'지출','保存':'저장','删除':'삭제','暂无记录。':'기록이 없습니다.','还没有目标，添加第一项吧。':'목표가 없습니다. 첫 목표를 추가하세요.','导出数据':'데이터 내보내기','导入数据':'데이터 가져오기','导出':'내보내기','导入':'가져오기','清空本机数据':'기기 데이터 지우기','数据与隐私':'데이터 및 개인정보','备注（可选）':'메모 (선택)','计算':'계산','换算':'변환','基础计算器':'계산기','公里 / 英里':'킬로미터 / 마일','输入公里数':'킬로미터 입력'},
+'es':{'首页':'Inicio','探索':'Explorar','工具':'Herramientas','我的':'Mi espacio','已完成':'completado','每日目标':'Objetivos diarios','添加':'Añadir','显示释义':'Ver significado','下一个词':'Siguiente palabra','点击显示中文释义':'Toca para ver el significado','学习建议':'Consejo de estudio','收入':'Ingresos','支出':'Gastos','保存':'Guardar','删除':'Eliminar','暂无记录。':'Todavía no hay registros.','还没有目标，添加第一项吧。':'Aún no hay objetivos. Añade el primero.','导出数据':'Exportar datos','导入数据':'Importar datos','导出':'Exportar','导入':'Importar','清空本机数据':'Borrar datos locales','数据与隐私':'Datos y privacidad','备注（可选）':'Nota (opcional)','计算':'Calcular','换算':'Convertir','基础计算器':'Calculadora','公里 / 英里':'Kilómetros / millas','输入公里数':'Introduce kilómetros'},
+'fr':{'首页':'Accueil','探索':'Explorer','工具':'Outils','我的':'Mon espace','已完成':'terminé','每日目标':'Objectifs quotidiens','添加':'Ajouter','显示释义':'Afficher le sens','下一个词':'Mot suivant','点击显示中文释义':'Appuyez pour voir le sens','学习建议':'Conseil d’étude','收入':'Revenus','支出':'Dépenses','保存':'Enregistrer','删除':'Supprimer','暂无记录。':'Aucun enregistrement.','还没有目标，添加第一项吧。':'Aucun objectif. Ajoutez le premier.','导出数据':'Exporter les données','导入数据':'Importer les données','导出':'Exporter','导入':'Importer','清空本机数据':'Effacer les données locales','数据与隐私':'Données et confidentialité','备注（可选）':'Note (facultatif)','计算':'Calculer','换算':'Convertir','基础计算器':'Calculatrice','公里 / 英里':'Kilomètres / miles','输入公里数':'Saisir les kilomètres'}
+};
+let currentLanguage=localStorage.getItem('xg-prime-language')||'zh-CN';
+function applyLanguage(lang){currentLanguage=lang;try{localStorage.setItem('xg-prime-language',lang)}catch(e){};const dict=DICT[lang]||{};const walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);let node;while(node=walker.nextNode()){if(!node.__xgOriginal)node.__xgOriginal=node.nodeValue;const original=node.__xgOriginal.trim();if(!original)continue;const translated=dict[original];if(translated)node.nodeValue=node.__xgOriginal.replace(original,translated)}document.querySelectorAll('[placeholder]').forEach(el=>{if(!el.dataset.xgPlaceholder)el.dataset.xgPlaceholder=el.placeholder;el.placeholder=dict[el.dataset.xgPlaceholder]||el.dataset.xgPlaceholder});document.documentElement.lang=lang}
+$('languageSelect').value=currentLanguage;$('languageSelect').onchange=e=>applyLanguage(e.target.value);
+const languageObserver=new MutationObserver(()=>{if(currentLanguage!=='zh-CN')applyLanguage(currentLanguage)});
+languageObserver.observe(document.body,{childList:true,subtree:true});
+
+render();applyLanguage(currentLanguage);
 if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
 </script></body></html>
