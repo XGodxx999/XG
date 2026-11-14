@@ -185,6 +185,10 @@ const I18N_PATCH={
 Object.keys(I18N_PATCH).forEach(lang=>Object.assign(DICT[lang],I18N_PATCH[lang]));
 
 
+// Full English coverage for remaining labels, helper text and mixed dynamic strings.
+Object.assign(DICT.en,{
+'中文':'Chinese','把目标拆成行动，把每一步变成进度。':'Turn goals into actions and every step into progress.','已完成':'completed','MARKET OVERVIEW · 示例数据':'MARKET OVERVIEW · DEMO DATA','刷新':'Refresh','示例指数，不代表真实行情；投资有风险，请以官方行情为准。':'Demo index only; not real-time market data. Investing involves risk. Check official market sources.','常用工具，一点即达':'Quick tools, one tap away','文A':'文A','持续完成小目标，建立稳定节奏':'Build consistency through small daily wins','打开':'Open','技能成长':'Skill development','逐步积累英语与 HVAC 基础':'Build English and HVAC fundamentals step by step','让目标、技能和工具形成一个系统。':'Bring goals, skills and tools together in one system.','每日目标与进度追踪':'Daily goals and progress tracking','基础词汇练习':'Essential vocabulary practice','个人收支记录':'Personal income and expense tracking','HVAC 学习路线':'HVAC learning path','计算与单位换算':'Calculations and unit conversion','数据备份与设置':'Data backup and settings','示例行情与投资记录':'Demo market data and investment records','常用英汉互译':'Common English–Chinese translations','把想做的事变成今天能完成的行动。':'Turn intentions into actions you can complete today.','从常用词汇开始，逐步积累。':'Start with useful vocabulary and build steadily.','点击显示中文释义':'Tap to reveal the Chinese meaning','显示释义':'Show meaning','上一个词':'Previous word','下一个词':'Next word','标记已掌握 ✓':'Mark as learned ✓','学习建议':'Study tips','先读单词，再看释义；尝试自己造一个简单句子。每天练习 5–10 个词即可。':'Read the word first, reveal its meaning, then make a simple sentence. Practice 5–10 words daily.','记录个人收入与支出，不连接银行账户。':'Track personal income and expenses. No bank account is connected.','示例指数，仅用于展示界面，不代表真实行情。':'Demo index for display only; not real market data.','投资记录':'Investment records','总投资：':'Total invested: ','收入':'Income','支出':'Expense','HVAC 学习清单 · 逐项记录进度':'HVAC learning checklist · track each step','求职与出国':'Jobs & migration','工作、简历与移民准备清单':'Work, resume and migration preparation checklist','此清单用于个人学习追踪。培训、职业资格和海外评估要求以目标国家及主管机构的官方规定为准。':'This checklist is for personal learning. Confirm training, qualifications and overseas assessment requirements with official authorities.','日常计算与单位换算。':'Everyday calculations and unit conversion.','基础计算器':'Calculator','加法 +':'Add +','减法 −':'Subtract −','乘法 ×':'Multiply ×','除法 ÷':'Divide ÷','计算':'Calculate','公里 / 英里':'Kilometers / miles','换算':'Convert','英汉互译 · 常用词':'English–Chinese · common words','翻译':'Translate','内置常用词典，离线可用；整句翻译建议使用在线翻译工具。':'Built-in dictionary works offline. Use an online translation service for full sentences.','浏览器 · 快速打开':'Browser · quick access','在浏览器打开':'Open in browser','本地运行说明':'About local operation','XG Prime 是可安装到主屏幕的渐进式网页应用（PWA）。安装后可独立窗口打开；数据保存在本机浏览器，不代表 App Store 原生应用。':'XG Prime is an installable progressive web app (PWA). It can open in a standalone window; data stays in this device’s browser. It is not a native App Store app.','备份目标、财务和学习进度':'Back up goals, finances and learning progress','从之前的 JSON 备份恢复':'Restore from a previous JSON backup','数据与隐私':'Data & privacy','数据默认保存在当前设备的浏览器存储中，不会自动上传到服务器，也不连接银行。更换设备或清除网站数据前，请先导出备份。':'Data is stored in this device’s browser and is not automatically uploaded. No bank is connected. Export a backup before changing devices or clearing site data.','清空本机数据':'Clear local data','首页':'Home','探索':'Explore','工具':'Tools','我的':'My Space','删除':'Delete','还没有目标，添加第一项吧。':'No goals yet. Add your first one.','收支记录':'Transaction','暂无记录。':'No records yet.','暂无投资记录。':'No investment records yet.','已掌握 ':'Mastered ',' 个词':' words','MARKET OVERVIEW':'MARKET OVERVIEW','投资记录':'Investment records'
+});
 let currentLanguage=localStorage.getItem('xg-prime-language')||'zh-CN';
 function applyLanguage(lang){
  currentLanguage=lang;
@@ -198,8 +202,12 @@ function applyLanguage(lang){
   const key=original.trim();
   if(!key)continue;
   if(lang==='zh-CN'){node.nodeValue=original;continue}
-  const translated=dict[key];
-  node.nodeValue=translated?original.replace(key,translated):original;
+  let translated=original;
+  if(lang!=='zh-CN'){
+   const keys=Object.keys(dict).filter(k=>k.length>1).sort((a,b)=>b.length-a.length);
+   for(const k of keys)if(translated.includes(k))translated=translated.split(k).join(dict[k]);
+  }
+  node.nodeValue=translated;
  }
  document.querySelectorAll('[placeholder],[title],[aria-label]').forEach(el=>{
   ['placeholder','title','aria-label'].forEach(attr=>{
