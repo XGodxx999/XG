@@ -565,8 +565,7 @@ function setLanguage(value){
  if(top)top.value=lang;if(settings)settings.value=lang;
  document.documentElement.lang=LOCALES[lang];
  document.title=lang==='zh-CN'?'XG Prime — 个人效率空间':'XG Prime — Personal Workspace';
- if(lang==='zh-CN'){location.reload();return;}
- translateNode(document.body);refreshDate();
+ location.reload();
 }
 const top=document.getElementById('languageSelect'),settings=document.getElementById('settingsLanguage');
 if(top)top.addEventListener('change',e=>setLanguage(e.target.value));
