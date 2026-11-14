@@ -613,8 +613,7 @@ function translateText(value){
 function translateTextNode(node){
  const current=node.nodeValue;
  const rendered=textRendered.get(node);
- if(rendered!==undefined&&current===rendered)return;
- if(!textOriginal.has(node)||rendered!==undefined)textOriginal.set(node,current);
+ if(!textOriginal.has(node)|| (rendered!==undefined&&current!==rendered))textOriginal.set(node,current);
  const original=textOriginal.get(node);
  const next=lang==='zh-CN'?original:translateText(original);
  if(current!==next)node.nodeValue=next;
@@ -627,8 +626,7 @@ function translateAttributes(el){
  for(const name of attrNames){
   if(!el.hasAttribute(name))continue;
   const current=el.getAttribute(name);
-  if(rendered[name]!==undefined&&current===rendered[name])continue;
-  if(originals[name]===undefined||rendered[name]!==undefined)originals[name]=current;
+  if(originals[name]===undefined|| (rendered[name]!==undefined&&current!==rendered[name]))originals[name]=current;
   const next=lang==='zh-CN'?originals[name]:translateText(originals[name]);
   if(current!==next)el.setAttribute(name,next);
   rendered[name]=next;
