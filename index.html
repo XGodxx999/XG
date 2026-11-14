@@ -691,13 +691,81 @@ Object.assign(D,{
 '本地运行说明':['About Local Use','ローカル利用について','로컬 사용 안내','Acerca del uso local','À propos de l’utilisation locale'],
 '本地工具无需账号；在线汇率需要网络。个人数据默认保存在当前设备，不会自动上传。':['Local tools need no account; online exchange rates require internet. Personal data stays on this device and is not uploaded automatically.','ローカルツールにアカウントは不要です。為替レートにはネット接続が必要です。個人データは端末に保存され、自動アップロードされません。','로컬 도구는 계정이 필요 없으며 환율 조회에는 인터넷이 필요합니다. 개인 데이터는 이 기기에 저장되고 자동 업로드되지 않습니다.','Las herramientas locales no requieren cuenta; los tipos de cambio necesitan internet. Los datos personales permanecen en este dispositivo.','Les outils locaux ne nécessitent aucun compte ; les taux de change exigent Internet. Les données personnelles restent sur cet appareil.']
 });
+Object.assign(D,{
+'个人中心':['Personal','マイページ','개인 공간','Personal','Personnel'],
+'把目标拆成行动，把每一步变成进度。':['Turn goals into actions and track every step.','目標を行動に分け、一歩ずつ進捗を記録します。','목표를 행동으로 나누고 진행 상황을 기록하세요.','Convierte objetivos en acciones y registra cada paso.','Transformez vos objectifs en actions et suivez chaque étape.'],
+'已完成':['Completed','完了','완료됨','Completado','Terminé'],
+'示例数据':['Sample data','サンプルデータ','샘플 데이터','Datos de ejemplo','Données d’exemple'],
+'工作中心':['Work Center','ワークセンター','업무 센터','Centro de trabajo','Espace de travail'],
+'收支与统计':['Income & Expenses','収支と統計','수입 및 지출','Ingresos y gastos','Revenus et dépenses'],
+'日程与安排':['Schedule','予定','일정','Agenda','Planning'],
+'学习成长':['Learning','学習','학습','Aprendizaje','Apprentissage'],
+'计划与进度':['Plans & Progress','計画と進捗','계획 및 진행','Planes y progreso','Plans et progression'],
+'备份与恢复':['Backup & Restore','バックアップと復元','백업 및 복원','Copia y restauración','Sauvegarde et restauration'],
+'今日焦点':['Today’s Focus','今日のフォーカス','오늘의 핵심','Enfoque de hoy','Priorités du jour'],
+'每日目标':['Daily Goals','毎日の目標','일일 목표','Objetivos diarios','Objectifs quotidiens'],
+'打开':['Open','開く','열기','Abrir','Ouvrir'],
+'任务管理':['Task Management','タスク管理','작업 관리','Gestión de tareas','Gestion des tâches'],
+'添加任务，例如：练习英语 20 分钟':['Add a task, e.g. practice English for 20 minutes','タスクを追加（例：英語を20分練習）','작업 추가 (예: 영어 20분 연습)','Añade una tarea, p. ej., practicar inglés 20 minutos','Ajouter une tâche, ex. : pratiquer l’anglais 20 minutes'],
+'任务优先级':['Task Priority','タスクの優先度','작업 우선순위','Prioridad de la tarea','Priorité de la tâche'],
+'普通':['Normal','通常','보통','Normal','Normale'],
+'高优先级':['High Priority','高優先度','높은 우선순위','Prioridad alta','Priorité élevée'],
+'低优先级':['Low Priority','低優先度','낮은 우선순위','Prioridad baja','Priorité faible'],
+'全部':['All','すべて','전체','Todo','Tout'],
+'待完成':['To Do','未完了','할 일','Pendiente','À faire'],
+'习惯追踪':['Habit Tracker','習慣トラッカー','습관 추적','Seguimiento de hábitos','Suivi des habitudes'],
+'添加习惯，例如：每天学习英语':['Add a habit, e.g. study English every day','習慣を追加（例：毎日英語を勉強）','습관 추가 (예: 매일 영어 공부)','Añade un hábito, p. ej., estudiar inglés a diario','Ajouter une habitude, ex. : étudier l’anglais chaque jour'],
+'数据说明':['About Your Data','データについて','데이터 안내','Información de datos','À propos de vos données'],
+'我的目标':['My Goals','自分の目標','내 목표','Mis objetivos','Mes objectifs'],
+'例如：学习英语 15 分钟':['e.g. study English for 15 minutes','例：英語を15分勉強','예: 영어 15분 공부','p. ej., estudiar inglés 15 minutos','ex. : étudier l’anglais 15 minutes'],
+'今日单词':['Word of the Day','今日の単語','오늘의 단어','Palabra del día','Mot du jour'],
+'点击显示中文释义':['Tap to show the Chinese meaning','タップして中国語の意味を表示','눌러서 중국어 뜻 보기','Pulsa para ver el significado en chino','Touchez pour afficher le sens en chinois'],
+'显示释义':['Show Meaning','意味を表示','뜻 표시','Mostrar significado','Afficher le sens'],
+'上一个词':['Previous Word','前の単語','이전 단어','Palabra anterior','Mot précédent'],
+'下一个词':['Next Word','次の単語','다음 단어','Palabra siguiente','Mot suivant'],
+'学习建议':['Study Tips','学習のヒント','학습 팁','Consejos de estudio','Conseils d’apprentissage'],
+'收支概览':['Financial Overview','収支の概要','수입·지출 개요','Resumen financiero','Aperçu financier'],
+'投资记录':['Investment Records','投資記録','투자 기록','Registros de inversión','Registres d’investissement'],
+'名称，例如：指数基金':['Name, e.g. index fund','名称（例：インデックスファンド）','이름 (예: 인덱스 펀드)','Nombre, p. ej., fondo indexado','Nom, ex. : fonds indiciel'],
+'涨跌 %（可选）':['Change % (optional)','変動率 %（任意）','변동률 % (선택)','Cambio % (opcional)','Variation % (facultatif)'],
+'记账':['Record Transaction','取引を記録','거래 기록','Registrar movimiento','Enregistrer une opération'],
+'学习清单 · 逐项记录进度':['Learning Checklist · Track Progress','学習リスト · 進捗を記録','학습 목록 · 진행 기록','Lista de aprendizaje · registra el progreso','Liste d’apprentissage · suivre les progrès'],
+'技能学习':['Skills','スキル学習','기술 학습','Habilidades','Compétences'],
+'求职与出国':['Jobs & Moving Abroad','就職と海外渡航','취업 및 해외 진출','Empleo y traslado al extranjero','Emploi et départ à l’étranger'],
+'管理中心':['Management Center','管理センター','관리 센터','Centro de gestión','Centre de gestion'],
+'专注计时':['Focus Timer','集中タイマー','집중 타이머','Temporizador de concentración','Minuteur de concentration'],
+'番茄钟 · 专注与休息':['Pomodoro · Focus & Breaks','ポモドーロ · 集中と休憩','뽀모도로 · 집중 및 휴식','Pomodoro · concentración y descanso','Pomodoro · concentration et pauses'],
+'语言工具':['Language Tools','言語ツール','언어 도구','Herramientas de idioma','Outils linguistiques'],
+'浏览与搜索':['Browse & Search','閲覧と検索','탐색 및 검색','Navegar y buscar','Navigation et recherche'],
+'快速备忘':['Quick Notes','クイックメモ','빠른 메모','Notas rápidas','Notes rapides'],
+'完整工具界面':['Full Tool Interface','ツールの全機能','전체 도구 인터페이스','Interfaz completa de herramientas','Interface complète des outils'],
+'专注计时器':['Focus Timer','集中タイマー','집중 타이머','Temporizador de concentración','Minuteur de concentration'],
+'开始秒表':['Start Stopwatch','ストップウォッチ開始','스톱워치 시작','Iniciar cronómetro','Démarrer le chronomètre'],
+'倒计时分钟数':['Countdown Minutes','カウントダウン（分）','카운트다운 분','Minutos de cuenta atrás','Minutes du compte à rebours'],
+'开始倒计时':['Start Countdown','カウントダウン開始','카운트다운 시작','Iniciar cuenta atrás','Démarrer le compte à rebours'],
+'重置倒计时':['Reset Countdown','カウントダウンをリセット','카운트다운 재설정','Reiniciar cuenta atrás','Réinitialiser le compte à rebours'],
+'粘贴或输入文本':['Paste or enter text','テキストを貼り付けるか入力','텍스트 붙여넣기 또는 입력','Pega o escribe texto','Collez ou saisissez du texte'],
+'转大写':['UPPERCASE','大文字に変換','대문자로','MAYÚSCULAS','MAJUSCULES'],
+'转小写':['lowercase','小文字に変換','소문자로','minúsculas','minuscules'],
+'清理空行':['Remove Empty Lines','空行を削除','빈 줄 제거','Eliminar líneas vacías','Supprimer les lignes vides'],
+'复制文本':['Copy Text','テキストをコピー','텍스트 복사','Copiar texto','Copier le texte'],
+'随机密码生成':['Random Password Generator','ランダムパスワード生成','무작위 비밀번호 생성','Generador de contraseñas','Générateur de mots de passe'],
+'密码长度':['Password Length','パスワードの長さ','비밀번호 길이','Longitud de contraseña','Longueur du mot de passe'],
+'生成密码':['Generate Password','パスワードを生成','비밀번호 생성','Generar contraseña','Générer un mot de passe'],
+'复制密码':['Copy Password','パスワードをコピー','비밀번호 복사','Copiar contraseña','Copier le mot de passe'],
+'格式化与校验':['Format & Validate','整形と検証','형식화 및 검증','Formatear y validar','Formater et valider'],
+'格式化 / 校验':['Format / Validate','整形 / 検証','형식화 / 검증','Formatear / validar','Formater / valider'],
+'压缩 JSON':['Minify JSON','JSONを圧縮','JSON 압축','Minificar JSON','Compresser JSON'],
+'处理结果':['Output','出力結果','처리 결과','Resultado','Résultat'],
+'复制颜色信息':['Copy Color Info','カラー情報をコピー','색상 정보 복사','Copiar información del color','Copier les informations couleur']
+});
 const langOrder=['en','ja','ko','es','fr'];
 let lang='zh-CN';
 try{lang=localStorage.getItem(KEY)||'zh-CN'}catch(e){}
 const textOriginal=new WeakMap(), textRendered=new WeakMap();
 const attrOriginal=new WeakMap(), attrRendered=new WeakMap();
-const attrNames=['placeholder','aria-label','alt','title','value'];
-const skipSelector='script,style,noscript,[data-no-translate]';
+const attrNames=['placeholder','aria-label','alt','title'];
+const skipSelector='script,style,noscript,textarea,pre,code,[contenteditable="true"],[data-no-translate]';
 const sources=Object.keys(D).sort((a,b)=>b.length-a.length);
 function translateText(value){
  if(typeof value!=='string'||!value||lang==='zh-CN')return value;
