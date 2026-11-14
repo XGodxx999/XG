@@ -10,9 +10,9 @@
   "description": "Plan · Learn · Grow. Your personal command center.",
   "icons": [
     {
-      "src": "./icon.svg?v=5",
-      "sizes": "any",
-      "type": "image/svg+xml",
+      "src": "./icon.png?v=6",
+      "sizes": "512x512",
+      "type": "image/png",
       "purpose": "any"
     }
   ]
