@@ -164,8 +164,54 @@ const EXTRA={
 };
 Object.keys(EXTRA).forEach(lang=>Object.assign(DICT[lang],EXTRA[lang]));
 
+// Expanded UI coverage for static and dynamically rendered interface strings.
+const I18N_PATCH={
+'en':{
+'运动':'Exercise','存钱':'Save money','收支记录':'Transaction','暂无投资记录。':'No investment records yet.','更新简历与工作经历':'Update your resume and work history','整理培训证明与证书':'Organize training records and certificates','搜索目标岗位并记录':'Search for target jobs and keep notes','了解移民 / 签证官方要求':'Review official immigration and visa requirements','准备面试英语自我介绍':'Prepare an English self-introduction for interviews','已掌握 ':'Mastered ',' 个词':' words','不能除以 0':'Cannot divide by zero','已刷新（示例）':'Refreshed (demo)','未收录 “':'No entry for “','”，试试 work / learn / future 等常用词':'”. Try common words such as work / learn / future.','请输入金额':'Enter an amount','添加投资':'Add investment','投资名称':'Investment name','涨跌幅（%）':'Change (%)','示例行情':'Demo market data','收支记录':'Transaction','本机存储空间不足，请先导出备份':'Local storage is full. Export a backup first.','版本':'Version','返回':'Back','确认':'Confirm','取消':'Cancel','搜索或输入网址':'Search or enter a URL','输入英文单词或短语':'Enter an English word or phrase','请输入要翻译的内容':'Enter text to translate','翻译':'Translate','打开网页':'Open website','市场概览':'Market overview','投资记录':'Investment records','求职清单':'Job search checklist','学习进度':'Learning progress','数据已恢复':'Data restored','文件格式不正确，无法导入':'Invalid backup file'
+},
+'ja':{
+'运动':'運動','存钱':'貯金','收支记录':'取引記録','暂无投资记录。':'投資記録はありません。','更新简历与工作经历':'履歴書と職歴を更新','整理培训证明与证书':'研修記録と資格証明を整理','搜索目标岗位并记录':'希望する求人を検索して記録','了解移民 / 签证官方要求':'移民・ビザの公式要件を確認','准备面试英语自我介绍':'面接用の英語自己紹介を準備','已掌握 ':'習得済み ',' 个词':'語','不能除以 0':'0で割ることはできません','已刷新（示例）':'更新しました（サンプル）','翻译':'翻訳','打开网页':'ウェブサイトを開く','市场概览':'マーケット概要','投资记录':'投資記録','求职清单':'求職チェックリスト','学习进度':'学習の進捗'
+},
+'ko':{
+'运动':'운동','存钱':'저축','收支记录':'거래 기록','暂无投资记录。':'투자 기록이 없습니다.','更新简历与工作经历':'이력서 및 경력 업데이트','整理培训证明与证书':'교육 기록 및 자격증 정리','搜索目标岗位并记录':'목표 채용공고 검색 및 기록','了解移民 / 签证官方要求':'공식 이민 및 비자 요건 확인','准备面试英语自我介绍':'면접 영어 자기소개 준비','已掌握 ':'학습 완료 ',' 个词':'개 단어','不能除以 0':'0으로 나눌 수 없습니다','已刷新（示例）':'새로고침 완료 (예시)','翻译':'번역','打开网页':'웹사이트 열기','市场概览':'시장 개요','投资记录':'투자 기록','求职清单':'구직 체크리스트','学习进度':'학습 진행 상황'
+},
+'es':{
+'运动':'Ejercicio','存钱':'Ahorrar dinero','收支记录':'Transacción','暂无投资记录。':'Aún no hay inversiones.','更新简历与工作经历':'Actualizar currículum y experiencia laboral','整理培训证明与证书':'Organizar formación y certificados','搜索目标岗位并记录':'Buscar y registrar ofertas objetivo','了解移民 / 签证官方要求':'Consultar requisitos oficiales de inmigración y visado','准备面试英语自我介绍':'Preparar una presentación en inglés para entrevistas','已掌握 ':'Aprendidas: ',' 个词':' palabras','不能除以 0':'No se puede dividir entre cero','已刷新（示例）':'Actualizado (demo)','翻译':'Traducir','打开网页':'Abrir sitio web','市场概览':'Resumen del mercado','投资记录':'Registros de inversión','求职清单':'Lista de búsqueda de empleo','学习进度':'Progreso de aprendizaje'
+},
+'fr':{
+'运动':'Exercice','存钱':'Épargner','收支记录':'Transaction','暂无投资记录。':'Aucun investissement pour le moment.','更新简历与工作经历':'Mettre à jour le CV et l’expérience','整理培训证明与证书':'Organiser les formations et certificats','搜索目标岗位并记录':'Rechercher et noter les offres ciblées','了解移民 / 签证官方要求':'Consulter les exigences officielles de visa et d’immigration','准备面试英语自我介绍':'Préparer une présentation en anglais pour les entretiens','已掌握 ':'Maîtrisés : ',' 个词':' mots','不能除以 0':'Division par zéro impossible','已刷新（示例）':'Actualisé (démo)','翻译':'Traduire','打开网页':'Ouvrir le site','市场概览':'Vue du marché','投资记录':'Historique des investissements','求职清单':'Liste de recherche d’emploi','学习进度':'Progression de l’apprentissage'
+}
+};
+Object.keys(I18N_PATCH).forEach(lang=>Object.assign(DICT[lang],I18N_PATCH[lang]));
+
+
 let currentLanguage=localStorage.getItem('xg-prime-language')||'zh-CN';
-function applyLanguage(lang){currentLanguage=lang;try{localStorage.setItem('xg-prime-language',lang)}catch(e){};const dict=DICT[lang]||{};const walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);let node;while(node=walker.nextNode()){if(!node.__xgOriginal)node.__xgOriginal=node.nodeValue;const original=node.__xgOriginal.trim();if(!original)continue;const translated=dict[original];if(translated)node.nodeValue=node.__xgOriginal.replace(original,translated)}document.querySelectorAll('[placeholder]').forEach(el=>{if(!el.dataset.xgPlaceholder)el.dataset.xgPlaceholder=el.placeholder;el.placeholder=dict[el.dataset.xgPlaceholder]||el.dataset.xgPlaceholder});document.documentElement.lang=lang}
+function applyLanguage(lang){
+ currentLanguage=lang;
+ try{localStorage.setItem('xg-prime-language',lang)}catch(e){}
+ const dict=DICT[lang]||{};
+ const walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);
+ let node;
+ while(node=walker.nextNode()){
+  if(!Object.prototype.hasOwnProperty.call(node,'__xgOriginal'))node.__xgOriginal=node.nodeValue;
+  const original=node.__xgOriginal;
+  const key=original.trim();
+  if(!key)continue;
+  if(lang==='zh-CN'){node.nodeValue=original;continue}
+  const translated=dict[key];
+  node.nodeValue=translated?original.replace(key,translated):original;
+ }
+ document.querySelectorAll('[placeholder],[title],[aria-label]').forEach(el=>{
+  ['placeholder','title','aria-label'].forEach(attr=>{
+   if(!el.hasAttribute(attr))return;
+   const keyName='xgOriginal_'+attr;
+   if(!Object.prototype.hasOwnProperty.call(el.dataset,keyName))el.dataset[keyName]=el.getAttribute(attr);
+   const original=el.dataset[keyName];
+   el.setAttribute(attr,lang==='zh-CN'?original:(dict[original]||original));
+  });
+ });
+ document.documentElement.lang=lang;
+}
 $('languageSelect').value=currentLanguage;$('languageSelect').onchange=e=>applyLanguage(e.target.value);
 const languageObserver=new MutationObserver(()=>{if(currentLanguage!=='zh-CN')applyLanguage(currentLanguage)});
 languageObserver.observe(document.body,{childList:true,subtree:true});
