@@ -596,38 +596,86 @@ Object.assign(D,{"四大中心":["Four Centers","4つのセンター","4개 센�
 const langOrder=['en','ja','ko','es','fr'];
 let lang='zh-CN';
 try{lang=localStorage.getItem(KEY)||'zh-CN'}catch(e){}
+const textOriginal=new WeakMap(), textRendered=new WeakMap();
+const attrOriginal=new WeakMap(), attrRendered=new WeakMap();
+const attrNames=['placeholder','aria-label','alt','title','value'];
+const skipSelector='script,style,noscript,[data-no-translate]';
+const sources=Object.keys(D).sort((a,b)=>b.length-a.length);
 function translateText(value){
- if(lang==='zh-CN')return value;
+ if(typeof value!=='string'||!value||lang==='zh-CN')return value;
  let out=value;
- Object.keys(D).sort((a,b)=>b.length-a.length).forEach(src=>{
-  const dest=D[src][langOrder.indexOf(lang)];
+ for(const src of sources){
+  const dest=D[src]&&D[src][langOrder.indexOf(lang)];
   if(dest)out=out.split(src).join(dest);
- });
+ }
  return out;
 }
-function translateNode(root){
- if(lang==='zh-CN')return;
- const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,{acceptNode:n=>n.nodeValue&&n.nodeValue.trim()?NodeFilter.FILTER_ACCEPT:NodeFilter.FILTER_REJECT});
- const nodes=[];while(walker.nextNode())nodes.push(walker.currentNode);
- nodes.forEach(n=>{const p=n.parentElement;if(!p||/^(SCRIPT|STYLE|NOSCRIPT)$/.test(p.tagName)||p.closest('[data-no-translate]'))return;const v=translateText(n.nodeValue);if(v!==n.nodeValue)n.nodeValue=v;});
- root.querySelectorAll('input[placeholder],textarea[placeholder],button[aria-label],select[aria-label],img[alt],[title],button[value],input[type=button][value],input[type=submit][value]').forEach(el=>['placeholder','aria-label','alt','title'].forEach(a=>{const v=el.getAttribute(a);if(v)el.setAttribute(a,translateText(v))}));root.querySelectorAll('button[value],input[type=button][value],input[type=submit][value]').forEach(el=>{const v=el.getAttribute('value');if(v)el.setAttribute('value',translateText(v))});
+function translateTextNode(node){
+ const current=node.nodeValue;
+ const rendered=textRendered.get(node);
+ if(rendered!==undefined&&current===rendered)return;
+ if(!textOriginal.has(node)||rendered!==undefined)textOriginal.set(node,current);
+ const original=textOriginal.get(node);
+ const next=lang==='zh-CN'?original:translateText(original);
+ if(current!==next)node.nodeValue=next;
+ textRendered.set(node,next);
 }
-function refreshDate(){const el=document.getElementById('date');if(el)el.textContent=new Intl.DateTimeFormat(LOCALES[lang]||'zh-CN',{year:'numeric',month:'long',day:'numeric',weekday:'long'}).format(new Date())}
-function setLanguage(value){
+function translateAttributes(el){
+ if(!el||el.nodeType!==Node.ELEMENT_NODE||el.matches(skipSelector)||el.closest('[data-no-translate]'))return;
+ let originals=attrOriginal.get(el), rendered=attrRendered.get(el);
+ if(!originals){originals={};rendered={};attrOriginal.set(el,originals);attrRendered.set(el,rendered);}
+ for(const name of attrNames){
+  if(!el.hasAttribute(name))continue;
+  const current=el.getAttribute(name);
+  if(rendered[name]!==undefined&&current===rendered[name])continue;
+  if(originals[name]===undefined||rendered[name]!==undefined)originals[name]=current;
+  const next=lang==='zh-CN'?originals[name]:translateText(originals[name]);
+  if(current!==next)el.setAttribute(name,next);
+  rendered[name]=next;
+ }
+}
+function translateNode(root){
+ if(!root)return;
+ if(root.nodeType===Node.TEXT_NODE){const p=root.parentElement;if(p&&!p.closest(skipSelector))translateTextNode(root);return;}
+ if(root.nodeType!==Node.ELEMENT_NODE&&root!==document)return;
+ const scope=root===document?document.body:root;
+ if(!scope)return;
+ if(scope.nodeType===Node.ELEMENT_NODE)translateAttributes(scope);
+ const walker=document.createTreeWalker(scope,NodeFilter.SHOW_TEXT);
+ while(walker.nextNode()){
+  const n=walker.currentNode,p=n.parentElement;
+  if(p&&!p.closest(skipSelector))translateTextNode(n);
+ }
+ if(scope.querySelectorAll)scope.querySelectorAll('*').forEach(translateAttributes);
+}
+function refreshDate(){
+ const el=document.getElementById('date');
+ if(el)el.textContent=new Intl.DateTimeFormat(LOCALES[lang]||'zh-CN',{year:'numeric',month:'long',day:'numeric',weekday:'long'}).format(new Date());
+}
+function applyLanguage(value){
  lang=LOCALES[value]?value:'zh-CN';
  try{localStorage.setItem(KEY,lang)}catch(e){}
- const top=document.getElementById('languageSelect'),settings=document.getElementById('settingsLanguage');
- if(top)top.value=lang;if(settings)settings.value=lang;
  document.documentElement.lang=LOCALES[lang];
+ const top=document.getElementById('languageSelect'),settings=document.getElementById('settingsLanguage');
+ if(top)top.value=lang;
+ if(settings)settings.value=lang;
  document.title=lang==='zh-CN'?'XG Prime — 个人效率空间':'XG Prime — Personal Workspace';
- location.reload();
+ translateNode(document.body);
+ refreshDate();
 }
 const top=document.getElementById('languageSelect'),settings=document.getElementById('settingsLanguage');
-if(top)top.addEventListener('change',e=>setLanguage(e.target.value));
-if(settings)settings.addEventListener('change',e=>setLanguage(e.target.value));
-const observer=new MutationObserver(records=>{if(lang==='zh-CN')return;records.forEach(r=>{r.addedNodes&&r.addedNodes.forEach(n=>{if(n.nodeType===Node.TEXT_NODE){const v=translateText(n.nodeValue);if(v!==n.nodeValue)n.nodeValue=v;}else if(n.nodeType===Node.ELEMENT_NODE)translateNode(n);});});});
-observer.observe(document.body,{childList:true,subtree:true,characterData:true});
-if(lang!=='zh-CN'){if(top)top.value=lang;if(settings)settings.value=lang;document.documentElement.lang=LOCALES[lang];translateNode(document.body);refreshDate();}
+if(top)top.addEventListener('change',e=>applyLanguage(e.target.value));
+if(settings)settings.addEventListener('change',e=>applyLanguage(e.target.value));
+const observer=new MutationObserver(records=>{
+ for(const record of records){
+  if(record.type==='characterData')translateTextNode(record.target);
+  record.addedNodes&&record.addedNodes.forEach(node=>translateNode(node));
+  if(record.type==='attributes')translateAttributes(record.target);
+ }
+});
+observer.observe(document.body,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:attrNames});
+applyLanguage(lang);
+
 })();
 </script>
 </body></html>
