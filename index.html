@@ -5,7 +5,7 @@
 <meta name="theme-color" content="#050608"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="XG Prime">
 <link rel="manifest" href="./manifest.webmanifest"><link rel="icon" href="./icon.png?v=6" type="image/png"><link rel="apple-touch-icon" sizes="180x180" href="./icon.png?v=6">
 <title>XG Prime</title>
-<link rel="stylesheet" href="./assets/css/app.css?v=1"><script>try{if(localStorage.getItem('xg-prime-theme')==='light'){document.documentElement.dataset.theme='light';var __m=document.querySelector('meta[name="theme-color"]');if(__m)__m.setAttribute('content','#dfe7f0');}}catch(e){}</script>
+<link rel="stylesheet" href="./assets/css/app.css?v=2"><script>try{if(localStorage.getItem('xg-prime-theme')==='light'){document.documentElement.dataset.theme='light';var __m=document.querySelector('meta[name="theme-color"]');if(__m)__m.setAttribute('content','#dfe7f0');}}catch(e){}</script>
 </head>
 <body>
 <div class="shell">
@@ -61,6 +61,7 @@
 <div class="toolbox" style="margin-top:12px"><h3>随机密码生成</h3><div class="form"><input class="field" id="passwordLength" type="number" min="8" max="64" value="16" aria-label="密码长度"><button class="btn" id="passwordGenerate">生成密码</button></div><input class="field" id="passwordOutput" readonly placeholder="生成的密码" style="margin-top:8px"><button class="btn secondary" id="passwordCopy" style="width:100%;margin-top:8px">复制密码</button><p class="note">密码仅在本机生成，不会上传。建议使用密码管理器保存。</p></div></div>
 <div class="catgroup tool-section" data-tool-section="developer"><div class="cathead"><strong>开发者工具</strong><span>开发者</span></div>
 <div class="toolbox"><h3>JSON 格式化与校验</h3><textarea class="field" id="jsonInput" rows="6" placeholder='输入 JSON，例如 {"name":"XG"}'></textarea><div class="form"><button class="btn" id="jsonFormat">格式化 / 校验</button><button class="btn secondary" id="jsonMinify">压缩 JSON</button></div><div class="result" id="jsonStatus" aria-live="polite"></div><textarea class="field" id="jsonOutput" rows="6" readonly placeholder="处理结果" style="margin-top:8px"></textarea><button class="btn secondary" id="jsonCopy" style="width:100%;margin-top:8px">复制结果</button></div>
+<div class="toolbox" style="margin-top:12px"><h3>文本差异比较</h3><p class="note">逐行比较两段文本，标记新增、删除和未变化内容。适合检查配置、代码和文案修改。</p><div class="form"><textarea class="field" id="diffBefore" rows="6" placeholder="原始文本"></textarea><textarea class="field" id="diffAfter" rows="6" placeholder="修改后的文本"></textarea></div><div class="form"><button class="btn" id="diffRun">比较差异</button><button class="btn secondary" id="diffClear">清空</button></div><div class="note" id="diffSummary" aria-live="polite">等待比较</div><div id="diffOutput" class="diff-output" aria-live="polite"></div></div>
 <div class="toolbox" style="margin-top:12px"><h3>Base64 与 URL 编码</h3><textarea class="field" id="codecInput" rows="4" placeholder="输入待编码或解码内容"></textarea><div class="toolgrid"><button class="btn secondary" id="base64Encode">Base64 编码</button><button class="btn secondary" id="base64Decode">Base64 解码</button><button class="btn secondary" id="urlEncode">URL 编码</button><button class="btn secondary" id="urlDecode">URL 解码</button></div><textarea class="field" id="codecOutput" rows="4" readonly placeholder="结果" style="margin-top:8px"></textarea><button class="btn secondary" id="codecCopy" style="width:100%;margin-top:8px">复制结果</button><p class="note" id="codecStatus" aria-live="polite"></p></div>
 <div class="toolbox" style="margin-top:12px"><h3>UUID 生成器</h3><input class="field" id="uuidOutput" readonly placeholder="点击生成"><div class="form"><button class="btn" id="uuidGenerate">生成 UUID</button><button class="btn secondary" id="uuidCopy">复制</button></div></div></div>
 <div class="catgroup tool-section" data-tool-section="exchange"><div class="cathead"><strong>汇率换算</strong><span>实时汇率</span></div><div class="toolbox"><p class="note">通过 Frankfurter 公共汇率接口获取最近可用参考汇率；并非实时交易报价。</p><div class="form"><input class="field" id="exchangeAmount" type="number" min="0" step="any" value="1"><select class="field" id="exchangeFrom"><option>USD</option><option>CNY</option><option>AUD</option><option>NZD</option><option>EUR</option><option>GBP</option><option>JPY</option><option>CAD</option><option>HKD</option></select></div><div class="form"><span class="muted" style="align-self:center">换算为</span><select class="field" id="exchangeTo"><option>CNY</option><option>USD</option><option>AUD</option><option>NZD</option><option>EUR</option><option>GBP</option><option>JPY</option><option>CAD</option><option>HKD</option></select></div><button class="btn" id="exchangeRun" style="width:100%">获取汇率并换算</button><div class="result" id="exchangeResult" aria-live="polite">等待查询</div><p class="note" id="exchangeUpdated"></p></div></div>
@@ -83,8 +84,8 @@
 </main>
 </div>
 <nav class="bottomnav"><div class="navinner"><button class="navbtn active" data-tab="home"><b>⌂</b>首页</button><button class="navbtn" data-tab="tools"><b>⌘</b>工具</button><button class="navbtn" data-tab="me"><b>◉</b>我的</button></div></nav>
-<script src="./assets/js/core.js?v=1"></script><script src="./assets/js/navigation.js?v=1"></script>
+<script src="./assets/js/core.js?v=2"></script><script src="./assets/js/navigation.js?v=1"></script>
 
 <script src="./assets/js/i18n.js?v=1"></script>
-<script src="./assets/js/tools.js?v=1"></script>
+<script src="./assets/js/tools.js?v=2"></script>
 </body></html>
