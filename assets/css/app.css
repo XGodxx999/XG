@@ -404,3 +404,6 @@ html[data-theme="light"] .dream small,html[data-theme="light"] .dream p,html[dat
 .diff-line.same{color:var(--muted)}
 .diff-empty{padding:12px;border:1px dashed var(--line);border-radius:10px;color:var(--muted);text-align:center}
 @media(max-width:560px){.form:has(#diffBefore){display:grid;grid-template-columns:1fr}.diff-output{max-height:320px}}
+
+/* Network diagnostics */
+.network-status-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:10px 0}.network-status-row .pill{margin-left:auto}.network-dot{width:10px;height:10px;border-radius:50%;background:#9aa3ad;box-shadow:0 0 0 4px rgba(154,163,173,.13)}.network-dot.online{background:#39bd83;box-shadow:0 0 0 4px rgba(57,189,131,.14)}.network-dot.offline{background:#df6b6b;box-shadow:0 0 0 4px rgba(223,107,107,.14)}.network-details{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.network-detail{padding:10px;border:1px solid var(--line);border-radius:10px;min-width:0}.network-detail small{display:block;color:var(--muted);font-size:11px}.network-detail strong{display:block;margin-top:4px;font-size:13px;overflow-wrap:anywhere}@media(max-width:560px){.network-details{grid-template-columns:1fr 1fr}}
