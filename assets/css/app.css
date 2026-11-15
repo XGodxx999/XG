@@ -395,3 +395,12 @@ html[data-theme="light"] .hero h1,html[data-theme="light"] .hero .eyebrow{color:
 html[data-theme="light"] .hero .eyebrow{color:#3b4654!important}
 html[data-theme="light"] .dream strong,html[data-theme="light"] .featurehero strong,html[data-theme="light"] .pageHead strong{color:#151a22!important}
 html[data-theme="light"] .dream small,html[data-theme="light"] .dream p,html[data-theme="light"] .featurehero small,html[data-theme="light"] .featurehero p,html[data-theme="light"] .pageHead small,html[data-theme="light"] .pageHead p{color:#667181!important}
+
+.diff-output{display:grid;gap:4px;margin-top:10px;max-height:420px;overflow:auto;font:12px/1.55 ui-monospace,SFMono-Regular,Menlo,monospace}
+.diff-line{display:grid;grid-template-columns:22px minmax(0,1fr);gap:8px;padding:5px 8px;border-radius:7px;white-space:pre-wrap;overflow-wrap:anywhere}
+.diff-line .diff-mark{opacity:.75;text-align:center}
+.diff-line.add{background:rgba(45,170,115,.14);color:#8fe0b4}
+.diff-line.remove{background:rgba(220,90,90,.14);color:#f0a0a0}
+.diff-line.same{color:var(--muted)}
+.diff-empty{padding:12px;border:1px dashed var(--line);border-radius:10px;color:var(--muted);text-align:center}
+@media(max-width:560px){.form:has(#diffBefore){display:grid;grid-template-columns:1fr}.diff-output{max-height:320px}}
