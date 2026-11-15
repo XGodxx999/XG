@@ -1,6 +1,7 @@
 (()=>{
 'use strict';const $=id=>document.getElementById(id);const root=$('aiSend');if(!root)return;
 const endpoint=$('aiEndpoint'),model=$('aiModel'),key=$('aiKey'),system=$('aiSystem'),prompt=$('aiPrompt'),messagesEl=$('aiMessages'),status=$('aiStatus'),send=$('aiSend'),stop=$('aiStop');let apiKey='',history=[],controller=null;
+key.addEventListener('input',()=>{apiKey=key.value.trim()});
 const presets={explain:'请用通俗语言解释下面的概念，先给结论，再分步骤说明，并提供一个例子。',translate:'请翻译以下内容，保留原意，并解释关键表达、语法和自然用法。',write:'请帮助我改进以下文字，保持原意，提升清晰度、结构和表达准确性。',code:'请分析以下代码，指出问题原因，给出可执行的修复方案，并解释关键修改。',plan:'请把以下目标拆解为明确、可执行、可衡量的步骤，标注优先级和风险。'};
 function saveConfig(){try{localStorage.setItem('xg-ai-endpoint',endpoint.value.trim());localStorage.setItem('xg-ai-model',model.value.trim());status.textContent='API 地址和模型名称已保存在本机；API Key 仍只在当前页面内存中。'}catch(e){status.textContent='浏览器不允许保存配置，请检查存储权限。'}}
 try{endpoint.value=localStorage.getItem('xg-ai-endpoint')||endpoint.value;model.value=localStorage.getItem('xg-ai-model')||''}catch(e){}
