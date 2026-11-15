@@ -87,7 +87,7 @@ const server = http.createServer(async (req, res) => {
       configured: Boolean(AI_API_KEY && AI_MODEL)
     });
   }
-  if (req.method === "GET" && pathname === "/diagnostics") {
+  if (req.method === "GET" && (pathname === "/diagnostics" || pathname === "/diagnostics-v2")) {
     if (!AI_API_KEY) return send(res, 200, { configured: false, message: "AI_API_KEY is missing" });
     try {
       const identity = await fetch("https://huggingface.co/api/whoami-v2", {
