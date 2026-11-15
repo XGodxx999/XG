@@ -12,11 +12,11 @@ services:
       - key: ALLOWED_ORIGIN
         value: https://xgodxx999.github.io
       - key: AI_PROVIDER
-        value: huggingface
+        value: openrouter
       - key: AI_BASE_URL
-        value: https://router.huggingface.co/v1/chat/completions
+        value: https://openrouter.ai/api/v1/chat/completions
       - key: AI_MODEL
-        value: swiss-ai/Apertus-70B-Instruct-2509:publicai
+        value: openrouter/free
       - key: AI_DAILY_LIMIT
         value: 20
       - key: AI_API_KEY
