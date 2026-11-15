@@ -29,4 +29,40 @@
  function inline(s){return esc(s).replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,'<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>').replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\*(.+?)\*/g,'<em>$1</em>').replace(/`([^`]+)`/g,'<code>$1</code>')}
  function renderMd(src){let html='',list=false;for(const line of src.split(/\r?\n/)){if(/^\s*[-*+]\s+/.test(line)){if(!list){html+='<ul>';list=true}html+='<li>'+inline(line.replace(/^\s*[-*+]\s+/,''))+'</li>';continue}if(list){html+='</ul>';list=false}const h=line.match(/^(#{1,3})\s+(.+)$/);if(h)html+='<h'+h[1].length+'>'+inline(h[2])+'</h'+h[1].length+'>';else if(line.trim())html+='<p>'+inline(line)+'</p>';else html+='<div style="height:6px"></div>'}if(list)html+='</ul>';return html||'预览会显示在这里'}
  if(md&&preview)md.addEventListener('input',()=>preview.innerHTML=renderMd(md.value));
+
+ const before=$('diffBefore'),after=$('diffAfter'),runDiff=$('diffRun'),clearDiff=$('diffClear'),diffOutput=$('diffOutput'),diffSummary=$('diffSummary');
+ function compareLines(a,b){
+  const left=a.replace(/\r\n?/g,'\n').split('\n'),right=b.replace(/\r\n?/g,'\n').split('\n');
+  if(left.length*right.length>90000)throw new Error('文本过长，请控制在约 300 行以内再比较');
+  const dp=Array.from({length:left.length+1},()=>new Uint32Array(right.length+1));
+  for(let i=left.length-1;i>=0;i--)for(let j=right.length-1;j>=0;j--)dp[i][j]=left[i]===right[j]?dp[i+1][j+1]+1:Math.max(dp[i+1][j],dp[i][j+1]);
+  const rows=[];let i=0,j=0,added=0,removed=0;
+  while(i<left.length&&j<right.length){
+   if(left[i]===right[j]){rows.push({type:'same',text:left[i++]});j++}
+   else if(dp[i+1][j]>=dp[i][j+1]){rows.push({type:'remove',text:left[i++]});removed++}
+   else{rows.push({type:'add',text:right[j++]});added++}
+  }
+  while(i<left.length){rows.push({type:'remove',text:left[i++]});removed++}
+  while(j<right.length){rows.push({type:'add',text:right[j++]});added++}
+  return{rows,added,removed};
+ }
+ if(runDiff&&before&&after&&diffOutput){
+  runDiff.addEventListener('click',()=>{
+   try{
+    const result=compareLines(before.value,after.value);
+    diffOutput.replaceChildren();
+    if(!before.value&&!after.value){diffSummary.textContent='请先输入两段文本';return}
+    result.rows.forEach(row=>{
+     const line=document.createElement('div');line.className='diff-line '+row.type;
+     const mark=document.createElement('span');mark.className='diff-mark';mark.textContent=row.type==='add'?'+':row.type==='remove'?'−':'·';
+     const content=document.createElement('span');content.textContent=row.text||' ';
+     line.append(mark,content);diffOutput.append(line);
+    });
+    if(!result.added&&!result.removed){const empty=document.createElement('div');empty.className='diff-empty';empty.textContent='两段文本完全一致';diffOutput.append(empty)}
+    diffSummary.textContent='新增 '+result.added+' 行 · 删除 '+result.removed+' 行 · 总计 '+result.rows.length+' 行';
+   }catch(error){diffSummary.textContent=error.message;diffOutput.replaceChildren()}
+  });
+  clearDiff?.addEventListener('click',()=>{before.value='';after.value='';diffOutput.replaceChildren();diffSummary.textContent='已清空'});
+ }
+
 })();
