@@ -4,6 +4,7 @@ const PORT = Number(process.env.PORT || 10000);
 const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || "https://xgodxx999.github.io";
 const AI_PROVIDER = (process.env.AI_PROVIDER || "huggingface").toLowerCase();
 const AI_BASE_URL = (process.env.AI_BASE_URL || "https://router.huggingface.co/v1/chat/completions").replace(/\/+$/, "");
+const AI_API_KEY_SOURCE = process.env.AI_API_KEY ? "AI_API_KEY" : process.env.OPENROUTER_API_KEY ? "OPENROUTER_API_KEY" : process.env.OPENAI_API_KEY ? "OPENAI_API_KEY" : "none";
 const AI_API_KEY = (process.env.AI_API_KEY || process.env.OPENROUTER_API_KEY || process.env.OPENAI_API_KEY || "").trim();
 const AI_MODEL = process.env.AI_MODEL || (AI_PROVIDER === "huggingface" ? "swiss-ai/Apertus-70B-Instruct-2509:publicai" : "");
 const WINDOW_MS = 60_000;
@@ -95,13 +96,15 @@ const server = http.createServer(async (req, res) => {
       });
       return send(res, 200, {
         configured: true,
+        tokenSource: AI_API_KEY_SOURCE,
+        tokenLength: AI_API_KEY.length,
         tokenPrefixValid: AI_API_KEY.startsWith("hf_"),
         tokenValid: identity.ok,
         tokenStatus: identity.status,
         modelConfigured: Boolean(AI_MODEL),
         note: identity.ok
           ? "Hugging Face accepted the token. Continue with a model inference test."
-          : "Hugging Face rejected the token. The token currently stored in Render AI_API_KEY is invalid, revoked, incomplete, or not the intended active token. Replace it with a newly created fine-grained token."
+          : "Hugging Face rejected the credential selected from Render environment variables. Check tokenSource and replace that variable with the complete active hf_ token."
       });
     } catch (error) {
       return send(res, 200, {
