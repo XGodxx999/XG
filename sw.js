@@ -1,9 +1,9 @@
-const CACHE='xg-prime-v52';
+const CACHE='xg-prime-v53';
 const FILES=[
  './','./index.html','./manifest.webmanifest','./icon.png','./icon.png?v=6','./icon.svg',
- './assets/css/app.css?v=3',
+ './assets/css/app.css?v=4',
  './assets/js/core.js?v=2','./assets/js/navigation.js?v=1',
- './assets/js/i18n.js?v=1','./assets/js/tools.js?v=2','./assets/js/network.js?v=1'
+ './assets/js/i18n.js?v=1','./assets/js/tools.js?v=2','./assets/js/network.js?v=1','./assets/js/ai.js?v=2'
 ];
 self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(FILES)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE).map(key=>caches.delete(key)))).then(()=>self.clients.claim())));
