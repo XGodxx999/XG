@@ -294,6 +294,18 @@ const E={
 'SETTINGS':['设置','SETTINGS','設定','설정','AJUSTES','PARAMÈTRES'],
 'Language':['语言','Language','言語','언어','Idioma','Langue']
 };
+Object.assign(D,{
+ '平台统一模型服务':['Platform-managed AI service','プラットフォーム管理の AI サービス','플랫폼 관리 AI 서비스','Servicio de IA gestionado por la plataforma','Service IA géré par la plateforme'],
+ '服务状态':['Service Status','サービス状態','서비스 상태','Estado del servicio','État du service'],
+ '正在检查 AI 服务…':['Checking AI service…','AI サービスを確認中…','AI 서비스 확인 중…','Comprobando el servicio de IA…','Vérification du service IA…'],
+ 'AI 服务已连接，可以开始对话。':['AI service connected. You can start chatting.','AI サービスに接続しました。チャットを開始できます。','AI 서비스에 연결되었습니다. 대화를 시작할 수 있습니다.','Servicio de IA conectado. Ya puedes iniciar una conversación.','Service IA connecté. Vous pouvez commencer à discuter.'],
+ 'XG 后端在线，模型服务尚未配置。':['XG backend is online, but the model provider is not configured.','XG バックエンドはオンラインですが、モデルサービスが未設定です。','XG 백엔드는 온라인이지만 모델 서비스가 구성되지 않았습니다.','El backend de XG está en línea, pero el proveedor del modelo no está configurado.','Le backend XG est en ligne, mais le fournisseur de modèle n’est pas configuré.'],
+ '暂时无法连接 AI 服务，请稍后重试。':['AI service is temporarily unavailable. Please try again later.','AI サービスに一時的に接続できません。後でもう一度お試しください。','AI 서비스에 일시적으로 연결할 수 없습니다. 나중에 다시 시도하세요.','El servicio de IA no está disponible temporalmente. Inténtalo más tarde.','Le service IA est temporairement indisponible. Réessayez plus tard.'],
+ 'AI 服务尚未配置，请稍后再试。':['AI service is not configured yet. Please try again later.','AI サービスはまだ設定されていません。後でもう一度お試しください。','AI 서비스가 아직 구성되지 않았습니다. 나중에 다시 시도하세요.','El servicio de IA aún no está configurado. Inténtalo más tarde.','Le service IA n’est pas encore configuré. Réessayez plus tard.'],
+ '向 AI 提问，开始对话。':['Ask AI to start a conversation.','AI に質問して会話を始めましょう。','AI에게 질문하여 대화를 시작하세요.','Pregunta a la IA para iniciar una conversación.','Posez une question à l’IA pour commencer.'],
+ '隐私与使用说明':['Privacy and Usage','プライバシーと利用について','개인정보 및 사용 안내','Privacidad y uso','Confidentialité et utilisation'],
+ 'AI 请求通过 XG Prime 服务端转发。对话内容会发送给当前配置的模型服务商以生成回答。请勿输入密码、银行卡信息或其他敏感资料。':['AI requests are routed through the XG Prime server. Conversation content is sent to the configured model provider to generate responses. Do not enter passwords, bank card details, or other sensitive information.','AI リクエストは XG Prime サーバー経由で送信されます。会話内容は回答生成のため設定済みモデルプロバイダーに送られます。パスワード、カード情報などの機密情報を入力しないでください。','AI 요청은 XG Prime 서버를 통해 전달됩니다. 대화 내용은 답변 생성을 위해 구성된 모델 제공업체로 전송됩니다. 비밀번호, 은행 카드 정보 또는 기타 민감한 정보를 입력하지 마세요.','Las solicitudes de IA se envían a través del servidor de XG Prime. El contenido de la conversación se transmite al proveedor de modelos configurado para generar respuestas. No introduzcas contraseñas, datos de tarjetas ni otra información sensible.','Les requêtes IA transitent par le serveur XG Prime. Le contenu des conversations est envoyé au fournisseur de modèles configuré pour générer des réponses. Ne saisissez pas de mots de passe, de coordonnées bancaires ni d’autres données sensibles.']
+});
 const englishSources=Object.keys(E).sort((a,b)=>b.length-a.length);
 const sources=Object.keys(D).sort((a,b)=>b.length-a.length);
 function translateText(value){
