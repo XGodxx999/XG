@@ -77,7 +77,8 @@ const server = http.createServer(async (req, res) => {
     res.writeHead(204, { "Access-Control-Allow-Origin": ALLOWED_ORIGIN, "Vary": "Origin" });
     return res.end();
   }
-  if (req.method === "GET" && req.url === "/health") {
+  const pathname = new URL(req.url || "/", "http://localhost").pathname;
+  if (req.method === "GET" && (pathname === "/" || pathname === "/health")) {
     return send(res, 200, {
       ok: true,
       service: "XG Prime AI Gateway",
@@ -85,7 +86,7 @@ const server = http.createServer(async (req, res) => {
       configured: Boolean(AI_API_KEY && AI_MODEL)
     });
   }
-  if (req.method !== "POST" || req.url !== "/api/ai") {
+  if (req.method !== "POST" || pathname !== "/api/ai") {
     return send(res, 404, { error: "Not found" });
   }
   if (!AI_API_KEY || !AI_MODEL) {
