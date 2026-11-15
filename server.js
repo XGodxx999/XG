@@ -86,6 +86,39 @@ const server = http.createServer(async (req, res) => {
       configured: Boolean(AI_API_KEY && AI_MODEL)
     });
   }
+  if (req.method === "GET" && pathname === "/diagnostics") {
+    if (!AI_API_KEY) return send(res, 200, { configured: false, message: "AI_API_KEY is missing" });
+    try {
+      const [identity, router] = await Promise.all([
+        fetch("https://huggingface.co/api/whoami-v2", {
+          headers: { Authorization: "Bearer " + AI_API_KEY },
+          signal: AbortSignal.timeout(15000)
+        }),
+        fetch("https://router.huggingface.co/v1/models", {
+          headers: { Authorization: "Bearer " + AI_API_KEY },
+          signal: AbortSignal.timeout(15000)
+        })
+      ]);
+      return send(res, 200, {
+        configured: true,
+        tokenValid: identity.ok,
+        tokenStatus: identity.status,
+        inferenceRouterStatus: router.status,
+        inferenceRouterAuthenticated: router.ok,
+        modelConfigured: Boolean(AI_MODEL),
+        note: !identity.ok
+          ? "Hugging Face rejected the token. Check that Render AI_API_KEY matches the active token."
+          : !router.ok
+            ? "The token is valid for Hugging Face, but the Inference Providers router rejected it. Check token permission and account/provider access."
+            : "Token and Inference Providers router authentication passed. A chat request is still needed to test model access and credits."
+      });
+    } catch (error) {
+      return send(res, 200, {
+        configured: true,
+        diagnosticError: error && error.name === "TimeoutError" ? "Hugging Face diagnostic timed out" : "Could not reach Hugging Face diagnostics"
+      });
+    }
+  }
   if (req.method !== "POST" || pathname !== "/api/ai") {
     return send(res, 404, { error: "Not found" });
   }
