@@ -2,18 +2,21 @@ const http = require("node:http");
 
 const PORT = Number(process.env.PORT || 10000);
 const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || "https://xgodxx999.github.io";
-const AI_API_KEY_SOURCE = process.env.AI_API_KEY ? "AI_API_KEY" : process.env.OPENROUTER_API_KEY ? "OPENROUTER_API_KEY" : process.env.OPENAI_API_KEY ? "OPENAI_API_KEY" : "none";
-const AI_API_KEY = (process.env.AI_API_KEY || process.env.OPENROUTER_API_KEY || process.env.OPENAI_API_KEY || "").trim();
-// Detect OpenRouter keys automatically so the existing Render Hugging Face settings cannot misroute requests.
-const AI_PROVIDER = AI_API_KEY.startsWith("sk-or-") ? "openrouter" : (process.env.AI_PROVIDER || "huggingface").toLowerCase();
+const AI_API_KEY_SOURCE = process.env.AI_API_KEY ? "AI_API_KEY" : process.env.GEMINI_API_KEY ? "GEMINI_API_KEY" : process.env.OPENROUTER_API_KEY ? "OPENROUTER_API_KEY" : process.env.OPENAI_API_KEY ? "OPENAI_API_KEY" : "none";
+const AI_API_KEY = (process.env.AI_API_KEY || process.env.GEMINI_API_KEY || process.env.OPENROUTER_API_KEY || process.env.OPENAI_API_KEY || "").trim();
+const AI_PROVIDER = AI_API_KEY.startsWith("sk-or-") ? "openrouter" : AI_API_KEY.startsWith("hf_") ? "huggingface" : AI_API_KEY ? "gemini" : (process.env.AI_PROVIDER || "gemini").toLowerCase();
 const configuredBaseUrl = (process.env.AI_BASE_URL || "").trim();
-const AI_BASE_URL = (AI_PROVIDER === "openrouter"
-  ? (configuredBaseUrl.startsWith("https://openrouter.ai/") ? configuredBaseUrl : "https://openrouter.ai/api/v1/chat/completions")
-  : (configuredBaseUrl || "https://router.huggingface.co/v1/chat/completions")).replace(/\/+$/, "");
+const AI_BASE_URL = AI_PROVIDER === "gemini"
+  ? (configuredBaseUrl.startsWith("https://generativelanguage.googleapis.com/") ? configuredBaseUrl : "https://generativelanguage.googleapis.com/v1beta")
+  : AI_PROVIDER === "openrouter"
+    ? (configuredBaseUrl.startsWith("https://openrouter.ai/") ? configuredBaseUrl : "https://openrouter.ai/api/v1/chat/completions")
+    : (configuredBaseUrl || "https://router.huggingface.co/v1/chat/completions").replace(/\/+$/, "");
 const configuredModel = (process.env.AI_MODEL || "").trim();
-const AI_MODEL = AI_PROVIDER === "openrouter"
-  ? (configuredModel === "openrouter/free" || configuredModel.endsWith(":free") ? configuredModel : "openrouter/free")
-  : (configuredModel || "swiss-ai/Apertus-70B-Instruct-2509:publicai");
+const AI_MODEL = AI_PROVIDER === "gemini"
+  ? (configuredModel && !configuredModel.includes("/") && !configuredModel.endsWith(":free") ? configuredModel : "gemini-3.5-flash-lite")
+  : AI_PROVIDER === "openrouter"
+    ? (configuredModel === "openrouter/free" || configuredModel.endsWith(":free") ? configuredModel : "openrouter/free")
+    : (configuredModel || "swiss-ai/Apertus-70B-Instruct-2509:publicai");
 const WINDOW_MS = 60_000;
 const MAX_REQUESTS = 12;
 const MAX_BODY_BYTES = 48_000;
@@ -97,33 +100,26 @@ const server = http.createServer(async (req, res) => {
   if (req.method === "GET" && (pathname === "/diagnostics" || pathname === "/diagnostics-v2")) {
     if (!AI_API_KEY) return send(res, 200, { configured: false, provider: AI_PROVIDER, message: "AI_API_KEY is missing" });
     try {
-      const identityUrl = AI_PROVIDER === "openrouter"
-        ? "https://openrouter.ai/api/v1/key"
-        : "https://huggingface.co/api/whoami-v2";
-      const identity = await fetch(identityUrl, {
-        headers: { Authorization: "Bearer " + AI_API_KEY },
-        signal: AbortSignal.timeout(15000)
-      });
+      let identityUrl, headers = { "Authorization": "Bearer " + AI_API_KEY };
+      if (AI_PROVIDER === "gemini") {
+        identityUrl = AI_BASE_URL.replace(/\/+$/, "") + "/models?pageSize=1";
+        headers = { "x-goog-api-key": AI_API_KEY };
+      } else if (AI_PROVIDER === "openrouter") {
+        identityUrl = "https://openrouter.ai/api/v1/key";
+      } else {
+        identityUrl = "https://huggingface.co/api/whoami-v2";
+      }
+      const identity = await fetch(identityUrl, { headers, signal: AbortSignal.timeout(15000) });
       return send(res, 200, {
-        configured: true,
-        provider: AI_PROVIDER,
-        tokenSource: AI_API_KEY_SOURCE,
-        tokenLength: AI_API_KEY.length,
-        keyPrefixValid: AI_PROVIDER === "openrouter" ? AI_API_KEY.startsWith("sk-or-") : AI_API_KEY.startsWith("hf_"),
-        tokenValid: identity.ok,
-        tokenStatus: identity.status,
-        model: AI_MODEL,
-        modelConfigured: Boolean(AI_MODEL),
-        note: identity.ok
-          ? (AI_PROVIDER === "openrouter" ? "OpenRouter accepted the API key. Continue with a model inference test." : "Hugging Face accepted the token. Continue with a model inference test.")
-          : (AI_PROVIDER === "openrouter" ? "OpenRouter rejected the API key. Check the Render AI_API_KEY value." : "Hugging Face rejected the credential selected from Render environment variables.")
+        configured: true, provider: AI_PROVIDER, tokenSource: AI_API_KEY_SOURCE,
+        keyLength: AI_API_KEY.length, tokenValid: identity.ok, tokenStatus: identity.status,
+        model: AI_MODEL, modelConfigured: Boolean(AI_MODEL),
+        note: identity.ok ? AI_PROVIDER + " accepted the server-side API key. Continue with a model inference test."
+          : AI_PROVIDER + " rejected the server-side API key. Check the Render AI_API_KEY value and provider key type."
       });
     } catch (error) {
-      return send(res, 200, {
-        configured: true,
-        provider: AI_PROVIDER,
-        diagnosticError: error && error.name === "TimeoutError" ? "Provider identity check timed out" : "Could not reach provider identity service"
-      });
+      return send(res, 200, { configured: true, provider: AI_PROVIDER,
+        diagnosticError: error && error.name === "TimeoutError" ? "Provider identity check timed out" : "Could not reach provider identity service" });
     }
   }
   if (req.method !== "POST" || pathname !== "/api/ai") {
@@ -154,6 +150,56 @@ const server = http.createServer(async (req, res) => {
   if (dailyLimited()) return send(res, 429, { error: "XG daily AI limit reached. Please try again tomorrow." });
 
   try {
+    if (AI_PROVIDER === "gemini") {
+      const systemText = messages.filter(item => item.role === "system").map(item => item.content).join("\n\n");
+      const contents = messages.filter(item => item.role !== "system").map(item => ({
+        role: item.role === "assistant" ? "model" : "user", parts: [{ text: item.content }]
+      }));
+      const stream = input.stream === true;
+      const endpoint = AI_BASE_URL.replace(/\/+$/, "") + "/models/" + encodeURIComponent(AI_MODEL) + ":" + (stream ? "streamGenerateContent?alt=sse" : "generateContent");
+      const geminiBody = { contents, generationConfig: {
+        temperature: Number.isFinite(Number(input.temperature)) ? Math.min(1, Math.max(0, Number(input.temperature))) : 0.7,
+        maxOutputTokens: 1000
+      }};
+      if (systemText) geminiBody.systemInstruction = { parts: [{ text: systemText }] };
+      const upstream = await fetch(endpoint, { method: "POST",
+        headers: { "x-goog-api-key": AI_API_KEY, "Content-Type": "application/json" },
+        signal: AbortSignal.timeout(90000), body: JSON.stringify(geminiBody) });
+      if (!upstream.ok) {
+        const body = await upstream.text();
+        return send(res, upstream.status, { error: "Gemini API: " + body.slice(0, 3000) });
+      }
+      if (!stream) {
+        const data = await upstream.json();
+        const answer = (data.candidates?.[0]?.content?.parts || []).map(part => part.text || "").join("");
+        return send(res, 200, { choices: [{ message: { role: "assistant", content: answer }, finish_reason: "stop" }] });
+      }
+      res.writeHead(200, { "Content-Type": "text/event-stream; charset=utf-8",
+        "Cache-Control": "no-cache, no-transform", "Connection": "keep-alive",
+        "Access-Control-Allow-Origin": ALLOWED_ORIGIN, "Vary": "Origin" });
+      const reader = upstream.body.getReader(), decoder = new TextDecoder();
+      let buffer = "";
+      const emit = chunk => {
+        const text = (chunk.candidates?.[0]?.content?.parts || []).map(part => part.text || "").join("");
+        if (text) res.write("data: " + JSON.stringify({ choices: [{ delta: { content: text }, index: 0 }] }) + "\n\n");
+      };
+      while (true) {
+        const { value, done } = await reader.read(); if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const events = buffer.split(/\r?\n\r?\n/); buffer = events.pop() || "";
+        for (const event of events) {
+          const line = event.split(/\r?\n/).find(item => item.startsWith("data:"));
+          if (!line) continue;
+          const raw = line.slice(5).trim();
+          if (raw && raw !== "[DONE]") { try { emit(JSON.parse(raw)); } catch (error) {} }
+        }
+      }
+      if (buffer.trim()) {
+        const line = buffer.split(/\r?\n/).find(item => item.startsWith("data:"));
+        if (line) { try { emit(JSON.parse(line.slice(5).trim())); } catch (error) {} }
+      }
+      res.write("data: [DONE]\n\n"); return res.end();
+    }
     const headers = {
       Authorization: "Bearer " + AI_API_KEY,
       "Content-Type": "application/json"
