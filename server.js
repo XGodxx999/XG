@@ -2,11 +2,18 @@ const http = require("node:http");
 
 const PORT = Number(process.env.PORT || 10000);
 const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || "https://xgodxx999.github.io";
-const AI_PROVIDER = (process.env.AI_PROVIDER || "huggingface").toLowerCase();
-const AI_BASE_URL = (process.env.AI_BASE_URL || "https://router.huggingface.co/v1/chat/completions").replace(/\/+$/, "");
 const AI_API_KEY_SOURCE = process.env.AI_API_KEY ? "AI_API_KEY" : process.env.OPENROUTER_API_KEY ? "OPENROUTER_API_KEY" : process.env.OPENAI_API_KEY ? "OPENAI_API_KEY" : "none";
 const AI_API_KEY = (process.env.AI_API_KEY || process.env.OPENROUTER_API_KEY || process.env.OPENAI_API_KEY || "").trim();
-const AI_MODEL = process.env.AI_MODEL || (AI_PROVIDER === "huggingface" ? "swiss-ai/Apertus-70B-Instruct-2509:publicai" : "");
+// Detect OpenRouter keys automatically so the existing Render Hugging Face settings cannot misroute requests.
+const AI_PROVIDER = AI_API_KEY.startsWith("sk-or-") ? "openrouter" : (process.env.AI_PROVIDER || "huggingface").toLowerCase();
+const configuredBaseUrl = (process.env.AI_BASE_URL || "").trim();
+const AI_BASE_URL = (AI_PROVIDER === "openrouter"
+  ? (configuredBaseUrl.startsWith("https://openrouter.ai/") ? configuredBaseUrl : "https://openrouter.ai/api/v1/chat/completions")
+  : (configuredBaseUrl || "https://router.huggingface.co/v1/chat/completions")).replace(/\/+$/, "");
+const configuredModel = (process.env.AI_MODEL || "").trim();
+const AI_MODEL = AI_PROVIDER === "openrouter"
+  ? (configuredModel === "openrouter/free" || configuredModel.endsWith(":free") ? configuredModel : "openrouter/free")
+  : (configuredModel || "swiss-ai/Apertus-70B-Instruct-2509:publicai");
 const WINDOW_MS = 60_000;
 const MAX_REQUESTS = 12;
 const MAX_BODY_BYTES = 48_000;
@@ -88,28 +95,34 @@ const server = http.createServer(async (req, res) => {
     });
   }
   if (req.method === "GET" && (pathname === "/diagnostics" || pathname === "/diagnostics-v2")) {
-    if (!AI_API_KEY) return send(res, 200, { configured: false, message: "AI_API_KEY is missing" });
+    if (!AI_API_KEY) return send(res, 200, { configured: false, provider: AI_PROVIDER, message: "AI_API_KEY is missing" });
     try {
-      const identity = await fetch("https://huggingface.co/api/whoami-v2", {
+      const identityUrl = AI_PROVIDER === "openrouter"
+        ? "https://openrouter.ai/api/v1/key"
+        : "https://huggingface.co/api/whoami-v2";
+      const identity = await fetch(identityUrl, {
         headers: { Authorization: "Bearer " + AI_API_KEY },
         signal: AbortSignal.timeout(15000)
       });
       return send(res, 200, {
         configured: true,
+        provider: AI_PROVIDER,
         tokenSource: AI_API_KEY_SOURCE,
         tokenLength: AI_API_KEY.length,
-        tokenPrefixValid: AI_API_KEY.startsWith("hf_"),
+        keyPrefixValid: AI_PROVIDER === "openrouter" ? AI_API_KEY.startsWith("sk-or-") : AI_API_KEY.startsWith("hf_"),
         tokenValid: identity.ok,
         tokenStatus: identity.status,
+        model: AI_MODEL,
         modelConfigured: Boolean(AI_MODEL),
         note: identity.ok
-          ? "Hugging Face accepted the token. Continue with a model inference test."
-          : "Hugging Face rejected the credential selected from Render environment variables. Check tokenSource and replace that variable with the complete active hf_ token."
+          ? (AI_PROVIDER === "openrouter" ? "OpenRouter accepted the API key. Continue with a model inference test." : "Hugging Face accepted the token. Continue with a model inference test.")
+          : (AI_PROVIDER === "openrouter" ? "OpenRouter rejected the API key. Check the Render AI_API_KEY value." : "Hugging Face rejected the credential selected from Render environment variables.")
       });
     } catch (error) {
       return send(res, 200, {
         configured: true,
-        diagnosticError: error && error.name === "TimeoutError" ? "Hugging Face identity check timed out" : "Could not reach Hugging Face identity service"
+        provider: AI_PROVIDER,
+        diagnosticError: error && error.name === "TimeoutError" ? "Provider identity check timed out" : "Could not reach provider identity service"
       });
     }
   }
@@ -147,7 +160,7 @@ const server = http.createServer(async (req, res) => {
     };
     if (AI_PROVIDER === "openrouter") {
       headers["HTTP-Referer"] = process.env.AI_SITE_URL || "https://xgodxx999.github.io/XG/";
-      headers["X-OpenRouter-Title"] = "XG Prime";
+      headers["X-Title"] = "XG Prime";
     }
     const upstream = await fetch(AI_BASE_URL, {
       method: "POST",
