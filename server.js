@@ -2,13 +2,15 @@ const http = require("node:http");
 
 const PORT = Number(process.env.PORT || 10000);
 const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || "https://xgodxx999.github.io";
-const AI_PROVIDER = (process.env.AI_PROVIDER || "openrouter").toLowerCase();
-const AI_BASE_URL = (process.env.AI_BASE_URL || "https://openrouter.ai/api/v1/chat/completions").replace(/\/+$/, "");
+const AI_PROVIDER = (process.env.AI_PROVIDER || "huggingface").toLowerCase();
+const AI_BASE_URL = (process.env.AI_BASE_URL || "https://router.huggingface.co/v1/chat/completions").replace(/\/+$/, "");
 const AI_API_KEY = process.env.AI_API_KEY || process.env.OPENROUTER_API_KEY || process.env.OPENAI_API_KEY || "";
-const AI_MODEL = process.env.AI_MODEL || (AI_PROVIDER === "openrouter" ? "openrouter/free" : "");
+const AI_MODEL = process.env.AI_MODEL || (AI_PROVIDER === "huggingface" ? "swiss-ai/Apertus-70B-Instruct-2509:publicai" : "");
 const WINDOW_MS = 60_000;
 const MAX_REQUESTS = 12;
 const MAX_BODY_BYTES = 48_000;
+const MAX_DAILY_REQUESTS = Math.max(1, Number(process.env.AI_DAILY_LIMIT || 20));
+let dailyCounter = { day: new Date().toISOString().slice(0, 10), count: 0 };
 const requests = new Map();
 
 function send(res, status, body, extraHeaders = {}) {
@@ -21,6 +23,14 @@ function send(res, status, body, extraHeaders = {}) {
     ...extraHeaders
   });
   res.end(JSON.stringify(body));
+}
+
+function dailyLimited() {
+  const today = new Date().toISOString().slice(0, 10);
+  if (dailyCounter.day !== today) dailyCounter = { day: today, count: 0 };
+  if (dailyCounter.count >= MAX_DAILY_REQUESTS) return true;
+  dailyCounter.count += 1;
+  return false;
 }
 
 function rateLimited(ip) {
@@ -99,6 +109,8 @@ const server = http.createServer(async (req, res) => {
   if (!messages.length || !messages.some(item => item.role === "user")) {
     return send(res, 400, { error: "A user message is required" });
   }
+
+  if (dailyLimited()) return send(res, 429, { error: "XG daily AI limit reached. Please try again tomorrow." });
 
   try {
     const headers = {
