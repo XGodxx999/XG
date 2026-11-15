@@ -4,7 +4,7 @@ const PORT = Number(process.env.PORT || 10000);
 const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || "https://xgodxx999.github.io";
 const AI_PROVIDER = (process.env.AI_PROVIDER || "huggingface").toLowerCase();
 const AI_BASE_URL = (process.env.AI_BASE_URL || "https://router.huggingface.co/v1/chat/completions").replace(/\/+$/, "");
-const AI_API_KEY = process.env.AI_API_KEY || process.env.OPENROUTER_API_KEY || process.env.OPENAI_API_KEY || "";
+const AI_API_KEY = (process.env.AI_API_KEY || process.env.OPENROUTER_API_KEY || process.env.OPENAI_API_KEY || "").trim();
 const AI_MODEL = process.env.AI_MODEL || (AI_PROVIDER === "huggingface" ? "swiss-ai/Apertus-70B-Instruct-2509:publicai" : "");
 const WINDOW_MS = 60_000;
 const MAX_REQUESTS = 12;
@@ -89,33 +89,24 @@ const server = http.createServer(async (req, res) => {
   if (req.method === "GET" && pathname === "/diagnostics") {
     if (!AI_API_KEY) return send(res, 200, { configured: false, message: "AI_API_KEY is missing" });
     try {
-      const [identity, router] = await Promise.all([
-        fetch("https://huggingface.co/api/whoami-v2", {
-          headers: { Authorization: "Bearer " + AI_API_KEY },
-          signal: AbortSignal.timeout(15000)
-        }),
-        fetch("https://router.huggingface.co/v1/models", {
-          headers: { Authorization: "Bearer " + AI_API_KEY },
-          signal: AbortSignal.timeout(15000)
-        })
-      ]);
+      const identity = await fetch("https://huggingface.co/api/whoami-v2", {
+        headers: { Authorization: "Bearer " + AI_API_KEY },
+        signal: AbortSignal.timeout(15000)
+      });
       return send(res, 200, {
         configured: true,
+        tokenPrefixValid: AI_API_KEY.startsWith("hf_"),
         tokenValid: identity.ok,
         tokenStatus: identity.status,
-        inferenceRouterStatus: router.status,
-        inferenceRouterAuthenticated: router.ok,
         modelConfigured: Boolean(AI_MODEL),
-        note: !identity.ok
-          ? "Hugging Face rejected the token. Check that Render AI_API_KEY matches the active token."
-          : !router.ok
-            ? "The token is valid for Hugging Face, but the Inference Providers router rejected it. Check token permission and account/provider access."
-            : "Token and Inference Providers router authentication passed. A chat request is still needed to test model access and credits."
+        note: identity.ok
+          ? "Hugging Face accepted the token. Continue with a model inference test."
+          : "Hugging Face rejected the token. The token currently stored in Render AI_API_KEY is invalid, revoked, incomplete, or not the intended active token. Replace it with a newly created fine-grained token."
       });
     } catch (error) {
       return send(res, 200, {
         configured: true,
-        diagnosticError: error && error.name === "TimeoutError" ? "Hugging Face diagnostic timed out" : "Could not reach Hugging Face diagnostics"
+        diagnosticError: error && error.name === "TimeoutError" ? "Hugging Face identity check timed out" : "Could not reach Hugging Face identity service"
       });
     }
   }
