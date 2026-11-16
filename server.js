@@ -1,61 +1,56 @@
-const http = require("node:http");
+'use strict';
+
+const http = require('node:http');
 
 const PORT = Number(process.env.PORT || 10000);
-const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || "https://xgodxx999.github.io";
-const AI_API_KEY_SOURCE = process.env.AI_API_KEY ? "AI_API_KEY" : process.env.GEMINI_API_KEY ? "GEMINI_API_KEY" : process.env.OPENROUTER_API_KEY ? "OPENROUTER_API_KEY" : process.env.OPENAI_API_KEY ? "OPENAI_API_KEY" : "none";
-const AI_API_KEY = (process.env.AI_API_KEY || process.env.GEMINI_API_KEY || process.env.OPENROUTER_API_KEY || process.env.OPENAI_API_KEY || "").trim();
-const AI_PROVIDER = AI_API_KEY.startsWith("sk-or-") ? "openrouter" : AI_API_KEY.startsWith("hf_") ? "huggingface" : AI_API_KEY ? "gemini" : (process.env.AI_PROVIDER || "gemini").toLowerCase();
-const configuredBaseUrl = (process.env.AI_BASE_URL || "").trim();
-const AI_BASE_URL = AI_PROVIDER === "gemini"
-  ? (configuredBaseUrl.startsWith("https://generativelanguage.googleapis.com/") ? configuredBaseUrl : "https://generativelanguage.googleapis.com/v1beta")
-  : AI_PROVIDER === "openrouter"
-    ? (configuredBaseUrl.startsWith("https://openrouter.ai/") ? configuredBaseUrl : "https://openrouter.ai/api/v1/chat/completions")
-    : (configuredBaseUrl || "https://router.huggingface.co/v1/chat/completions").replace(/\/+$/, "");
-const configuredModel = (process.env.AI_MODEL || "").trim();
-const AI_MODEL = AI_PROVIDER === "gemini"
-  ? (configuredModel && !configuredModel.includes("/") && !configuredModel.endsWith(":free") ? configuredModel : "gemini-3.5-flash-lite")
-  : AI_PROVIDER === "openrouter"
-    ? (configuredModel === "openrouter/free" || configuredModel.endsWith(":free") ? configuredModel : "openrouter/free")
-    : (configuredModel || "swiss-ai/Apertus-70B-Instruct-2509:publicai");
-const WINDOW_MS = 60_000;
-const MAX_REQUESTS = 12;
+const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || 'https://xgodxx999.github.io';
+const API_KEY = (process.env.AI_API_KEY || process.env.GEMINI_API_KEY || '').trim();
+const MODEL = (process.env.AI_MODEL || 'gemini-3.5-flash-lite').trim();
+const BASE_URL = (process.env.AI_BASE_URL || 'https://generativelanguage.googleapis.com/v1beta').replace(/\\/+$/, '');
+const DAILY_LIMIT = Math.max(1, Number.parseInt(process.env.AI_DAILY_LIMIT || '20', 10) || 20);
 const MAX_BODY_BYTES = 48_000;
-const MAX_DAILY_REQUESTS = Math.max(1, Number(process.env.AI_DAILY_LIMIT || 20));
-let dailyCounter = { day: new Date().toISOString().slice(0, 10), count: 0 };
-const requests = new Map();
+const MAX_MESSAGES = 24;
+const MAX_MESSAGE_CHARS = 6_000;
+const RATE_WINDOW_MS = 60_000;
+const RATE_LIMIT = 12;
 
-function send(res, status, body, extraHeaders = {}) {
+let daily = { date: new Date().toISOString().slice(0, 10), count: 0 };
+const clients = new Map();
+
+function json(res, status, data, headers = {}) {
   if (res.headersSent) return res.end();
   res.writeHead(status, {
-    "Content-Type": "application/json; charset=utf-8",
-    "Cache-Control": "no-store",
-    "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
-    "Vary": "Origin",
-    ...extraHeaders
+    'Content-Type': 'application/json; charset=utf-8',
+    'Cache-Control': 'no-store',
+    'Access-Control-Allow-Origin': ALLOWED_ORIGIN,
+    'Vary': 'Origin',
+    ...headers
   });
-  res.end(JSON.stringify(body));
+  res.end(JSON.stringify(data));
 }
 
-function dailyLimited() {
+function consumeDailyLimit() {
   const today = new Date().toISOString().slice(0, 10);
-  if (dailyCounter.day !== today) dailyCounter = { day: today, count: 0 };
-  if (dailyCounter.count >= MAX_DAILY_REQUESTS) return true;
-  dailyCounter.count += 1;
-  return false;
+  if (daily.date !== today) daily = { date: today, count: 0 };
+  if (daily.count >= DAILY_LIMIT) return false;
+  daily.count += 1;
+  return true;
 }
 
-function rateLimited(ip) {
+function isRateLimited(ip) {
   const now = Date.now();
-  let entry = requests.get(ip);
-  if (!entry || now - entry.start >= WINDOW_MS) {
-    entry = { start: now, count: 0 };
-    requests.set(ip, entry);
+  let item = clients.get(ip);
+  if (!item || now - item.start >= RATE_WINDOW_MS) {
+    item = { start: now, count: 0 };
+    clients.set(ip, item);
   }
-  entry.count += 1;
-  if (requests.size > 5000) {
-    for (const [key, value] of requests) if (now - value.start >= WINDOW_MS) requests.delete(key);
+  item.count += 1;
+  if (clients.size > 4000) {
+    for (const [key, value] of clients) {
+      if (now - value.start >= RATE_WINDOW_MS) clients.delete(key);
+    }
   }
-  return entry.count > MAX_REQUESTS;
+  return item.count > RATE_LIMIT;
 }
 
 async function readJson(req) {
@@ -64,196 +59,215 @@ async function readJson(req) {
   for await (const chunk of req) {
     size += chunk.length;
     if (size > MAX_BODY_BYTES) {
-      const error = new Error("Request too large");
+      const error = new Error('Request too large');
       error.status = 413;
       throw error;
     }
     chunks.push(chunk);
   }
-  try { return JSON.parse(Buffer.concat(chunks).toString("utf8") || "{}"); }
-  catch {
-    const error = new Error("Invalid JSON");
+  try {
+    return JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}');
+  } catch {
+    const error = new Error('Invalid JSON');
     error.status = 400;
     throw error;
   }
 }
 
-const server = http.createServer(async (req, res) => {
-  const origin = req.headers.origin || "";
-  if (origin && origin !== ALLOWED_ORIGIN) return send(res, 403, { error: "Origin not allowed" });
+function normalizeMessages(input) {
+  if (!Array.isArray(input) || input.length < 1 || input.length > MAX_MESSAGES) {
+    throw Object.assign(new Error('Invalid messages'), { status: 400 });
+  }
+  const messages = input.map(item => ({
+    role: ['system', 'user', 'assistant'].includes(item?.role) ? item.role : 'user',
+    content: typeof item?.content === 'string' ? item.content.slice(0, MAX_MESSAGE_CHARS).trim() : ''
+  })).filter(item => item.content);
 
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-  if (req.method === "OPTIONS") {
-    res.writeHead(204, { "Access-Control-Allow-Origin": ALLOWED_ORIGIN, "Vary": "Origin" });
+  if (!messages.some(item => item.role === 'user')) {
+    throw Object.assign(new Error('A user message is required'), { status: 400 });
+  }
+  return messages;
+}
+
+function toGeminiContents(messages) {
+  const contents = [];
+  for (const item of messages.filter(message => message.role !== 'system')) {
+    const role = item.role === 'assistant' ? 'model' : 'user';
+    const previous = contents[contents.length - 1];
+    if (previous?.role === role) previous.parts[0].text += '\n\n' + item.content;
+    else contents.push({ role, parts: [{ text: item.content }] });
+  }
+  while (contents[0]?.role === 'model') contents.shift();
+  return contents;
+}
+
+function sendSse(res, payload) {
+  return res.write('data: ' + JSON.stringify(payload) + '\n\n');
+}
+
+async function handleGemini(req, res, input, messages) {
+  const systemText = messages.filter(item => item.role === 'system').map(item => item.content).join('\n\n');
+  const contents = toGeminiContents(messages);
+  if (!contents.length) return json(res, 400, { error: 'A user message is required' });
+
+  const streaming = input.stream === true;
+  const endpoint = BASE_URL + '/models/' + encodeURIComponent(MODEL) + ':' +
+    (streaming ? 'streamGenerateContent?alt=sse' : 'generateContent');
+  const temperature = Number(input.temperature);
+  const body = {
+    contents,
+    generationConfig: {
+      temperature: Number.isFinite(temperature) ? Math.min(1, Math.max(0, temperature)) : 0.7,
+      maxOutputTokens: 1200
+    }
+  };
+  if (systemText) body.systemInstruction = { parts: [{ text: systemText }] };
+
+  const upstream = await fetch(endpoint, {
+    method: 'POST',
+    headers: { 'x-goog-api-key': API_KEY, 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+    signal: AbortSignal.timeout(90_000)
+  });
+
+  if (!upstream.ok) {
+    const detail = (await upstream.text()).slice(0, 2500);
+    return json(res, upstream.status, { error: 'Gemini API: ' + detail });
+  }
+
+  if (!streaming) {
+    const data = await upstream.json();
+    const answer = (data.candidates?.[0]?.content?.parts || [])
+      .map(part => typeof part.text === 'string' ? part.text : '').join('');
+    if (!answer) return json(res, 502, { error: 'Gemini returned no text content' });
+    return json(res, 200, {
+      choices: [{ message: { role: 'assistant', content: answer }, finish_reason: 'stop' }]
+    });
+  }
+
+  res.writeHead(200, {
+    'Content-Type': 'text/event-stream; charset=utf-8',
+    'Cache-Control': 'no-cache, no-transform',
+    'Connection': 'keep-alive',
+    'X-Accel-Buffering': 'no',
+    'Access-Control-Allow-Origin': ALLOWED_ORIGIN,
+    'Vary': 'Origin'
+  });
+
+  const reader = upstream.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+  let clientClosed = false;
+  res.on('close', () => { clientClosed = true; reader.cancel().catch(() => {}); });
+
+  function emitEvent(event) {
+    const line = event.split(/\\r?\\n/).find(value => value.startsWith('data:'));
+    if (!line) return;
+    const raw = line.slice(5).trim();
+    if (!raw || raw === '[DONE]') return;
+    try {
+      const packet = JSON.parse(raw);
+      const text = (packet.candidates?.[0]?.content?.parts || [])
+        .map(part => typeof part.text === 'string' ? part.text : '').join('');
+      if (text) sendSse(res, { choices: [{ index: 0, delta: { content: text } }] });
+    } catch { /* Ignore malformed provider event; continue reading the stream. */ }
+  }
+
+  while (!clientClosed) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const events = buffer.split(/\\r?\\n\\r?\\n/);
+    buffer = events.pop() || '';
+    for (const event of events) emitEvent(event);
+  }
+  buffer += decoder.decode();
+  if (buffer.trim()) emitEvent(buffer);
+  if (!clientClosed) {
+    res.write('data: [DONE]\\n\\n');
+    res.end();
+  }
+}
+
+const server = http.createServer(async (req, res) => {
+  const origin = req.headers.origin || '';
+  if (origin && origin !== ALLOWED_ORIGIN) return json(res, 403, { error: 'Origin not allowed' });
+
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  if (req.method === 'OPTIONS') {
+    res.writeHead(204, { 'Access-Control-Allow-Origin': ALLOWED_ORIGIN, 'Vary': 'Origin' });
     return res.end();
   }
-  const pathname = new URL(req.url || "/", "http://localhost").pathname;
-  if (req.method === "GET" && (pathname === "/" || pathname === "/health")) {
-    return send(res, 200, {
+
+  const pathname = new URL(req.url || '/', 'http://localhost').pathname;
+  if (req.method === 'GET' && (pathname === '/' || pathname === '/health')) {
+    return json(res, 200, {
       ok: true,
-      service: "XG Prime AI Gateway",
-      provider: AI_PROVIDER,
-      configured: Boolean(AI_API_KEY && AI_MODEL)
+      service: 'XG Prime AI Gateway',
+      provider: 'gemini',
+      model: MODEL,
+      configured: Boolean(API_KEY && MODEL)
     });
   }
-  if (req.method === "GET" && (pathname === "/diagnostics" || pathname === "/diagnostics-v2")) {
-    if (!AI_API_KEY) return send(res, 200, { configured: false, provider: AI_PROVIDER, message: "AI_API_KEY is missing" });
+
+  if (req.method === 'GET' && (pathname === '/diagnostics' || pathname === '/diagnostics-v2')) {
+    if (!API_KEY) return json(res, 200, { configured: false, provider: 'gemini', message: 'AI_API_KEY is missing' });
     try {
-      let identityUrl, headers = { "Authorization": "Bearer " + AI_API_KEY };
-      if (AI_PROVIDER === "gemini") {
-        identityUrl = AI_BASE_URL.replace(/\/+$/, "") + "/models?pageSize=1";
-        headers = { "x-goog-api-key": AI_API_KEY };
-      } else if (AI_PROVIDER === "openrouter") {
-        identityUrl = "https://openrouter.ai/api/v1/key";
-      } else {
-        identityUrl = "https://huggingface.co/api/whoami-v2";
-      }
-      const identity = await fetch(identityUrl, { headers, signal: AbortSignal.timeout(15000) });
-      return send(res, 200, {
-        configured: true, provider: AI_PROVIDER, tokenSource: AI_API_KEY_SOURCE,
-        keyLength: AI_API_KEY.length, tokenValid: identity.ok, tokenStatus: identity.status,
-        model: AI_MODEL, modelConfigured: Boolean(AI_MODEL),
-        note: identity.ok ? AI_PROVIDER + " accepted the server-side API key. Continue with a model inference test."
-          : AI_PROVIDER + " rejected the server-side API key. Check the Render AI_API_KEY value and provider key type."
+      const response = await fetch(BASE_URL + '/models?pageSize=1', {
+        headers: { 'x-goog-api-key': API_KEY },
+        signal: AbortSignal.timeout(15_000)
+      });
+      return json(res, 200, {
+        configured: true,
+        provider: 'gemini',
+        tokenSource: process.env.AI_API_KEY ? 'AI_API_KEY' : 'GEMINI_API_KEY',
+        keyLength: API_KEY.length,
+        tokenValid: response.ok,
+        tokenStatus: response.status,
+        model: MODEL,
+        modelConfigured: Boolean(MODEL),
+        note: response.ok ? 'Gemini accepted the server-side API key. Continue with a model inference test.' : 'Gemini rejected the server-side API key.'
       });
     } catch (error) {
-      return send(res, 200, { configured: true, provider: AI_PROVIDER,
-        diagnosticError: error && error.name === "TimeoutError" ? "Provider identity check timed out" : "Could not reach provider identity service" });
+      return json(res, 200, {
+        configured: true,
+        provider: 'gemini',
+        diagnosticError: error?.name === 'TimeoutError' ? 'Provider identity check timed out' : 'Could not reach provider identity service'
+      });
     }
   }
-  if (req.method !== "POST" || pathname !== "/api/ai") {
-    return send(res, 404, { error: "Not found" });
-  }
-  if (!AI_API_KEY || !AI_MODEL) {
-    return send(res, 503, { error: "AI service is not configured. Add AI_API_KEY and AI_MODEL in Render Environment." });
-  }
 
-  const ip = String(req.headers["x-forwarded-for"] || req.socket.remoteAddress || "unknown").split(",")[0].trim();
-  if (rateLimited(ip)) return send(res, 429, { error: "Too many requests. Please wait one minute." });
-
-  let input;
-  try { input = await readJson(req); }
-  catch (error) { return send(res, error.status || 400, { error: error.message || "Invalid request" }); }
-
-  if (!Array.isArray(input.messages) || input.messages.length < 1 || input.messages.length > 24) {
-    return send(res, 400, { error: "Invalid messages" });
+  if (req.method !== 'POST' || pathname !== '/api/ai') {
+    return json(res, 404, { error: 'Not found' });
   }
-  const messages = input.messages.map(item => ({
-    role: ["system", "user", "assistant"].includes(item && item.role) ? item.role : "user",
-    content: typeof (item && item.content) === "string" ? item.content.slice(0, 6000) : ""
-  })).filter(item => item.content);
-  if (!messages.length || !messages.some(item => item.role === "user")) {
-    return send(res, 400, { error: "A user message is required" });
+  if (!API_KEY || !MODEL) return json(res, 503, { error: 'AI service is not configured' });
+
+  const ip = String(req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown').split(',')[0].trim();
+  if (isRateLimited(ip)) return json(res, 429, { error: 'Too many requests. Please wait one minute.' });
+
+  let input, messages;
+  try {
+    input = await readJson(req);
+    messages = normalizeMessages(input.messages);
+  } catch (error) {
+    return json(res, error.status || 400, { error: error.message || 'Invalid request' });
   }
 
-  if (dailyLimited()) return send(res, 429, { error: "XG daily AI limit reached. Please try again tomorrow." });
+  if (!consumeDailyLimit()) return json(res, 429, { error: 'XG daily AI limit reached. Please try again tomorrow.' });
 
   try {
-    if (AI_PROVIDER === "gemini") {
-      const systemText = messages.filter(item => item.role === "system").map(item => item.content).join("\n\n");
-      const contents = messages.filter(item => item.role !== "system").map(item => ({
-        role: item.role === "assistant" ? "model" : "user", parts: [{ text: item.content }]
-      }));
-      const stream = input.stream === true;
-      const endpoint = AI_BASE_URL.replace(/\/+$/, "") + "/models/" + encodeURIComponent(AI_MODEL) + ":" + (stream ? "streamGenerateContent?alt=sse" : "generateContent");
-      const geminiBody = { contents, generationConfig: {
-        temperature: Number.isFinite(Number(input.temperature)) ? Math.min(1, Math.max(0, Number(input.temperature))) : 0.7,
-        maxOutputTokens: 1000
-      }};
-      if (systemText) geminiBody.systemInstruction = { parts: [{ text: systemText }] };
-      const upstream = await fetch(endpoint, { method: "POST",
-        headers: { "x-goog-api-key": AI_API_KEY, "Content-Type": "application/json" },
-        signal: AbortSignal.timeout(90000), body: JSON.stringify(geminiBody) });
-      if (!upstream.ok) {
-        const body = await upstream.text();
-        return send(res, upstream.status, { error: "Gemini API: " + body.slice(0, 3000) });
-      }
-      if (!stream) {
-        const data = await upstream.json();
-        const answer = (data.candidates?.[0]?.content?.parts || []).map(part => part.text || "").join("");
-        return send(res, 200, { choices: [{ message: { role: "assistant", content: answer }, finish_reason: "stop" }] });
-      }
-      res.writeHead(200, { "Content-Type": "text/event-stream; charset=utf-8",
-        "Cache-Control": "no-cache, no-transform", "Connection": "keep-alive",
-        "Access-Control-Allow-Origin": ALLOWED_ORIGIN, "Vary": "Origin" });
-      const reader = upstream.body.getReader(), decoder = new TextDecoder();
-      let buffer = "";
-      const emit = chunk => {
-        const text = (chunk.candidates?.[0]?.content?.parts || []).map(part => part.text || "").join("");
-        if (text) res.write("data: " + JSON.stringify({ choices: [{ delta: { content: text }, index: 0 }] }) + "\n\n");
-      };
-      while (true) {
-        const { value, done } = await reader.read(); if (done) break;
-        buffer += decoder.decode(value, { stream: true });
-        const events = buffer.split(/\r?\n\r?\n/); buffer = events.pop() || "";
-        for (const event of events) {
-          const line = event.split(/\r?\n/).find(item => item.startsWith("data:"));
-          if (!line) continue;
-          const raw = line.slice(5).trim();
-          if (raw && raw !== "[DONE]") { try { emit(JSON.parse(raw)); } catch (error) {} }
-        }
-      }
-      if (buffer.trim()) {
-        const line = buffer.split(/\r?\n/).find(item => item.startsWith("data:"));
-        if (line) { try { emit(JSON.parse(line.slice(5).trim())); } catch (error) {} }
-      }
-      res.write("data: [DONE]\n\n"); return res.end();
-    }
-    const headers = {
-      Authorization: "Bearer " + AI_API_KEY,
-      "Content-Type": "application/json"
-    };
-    if (AI_PROVIDER === "openrouter") {
-      headers["HTTP-Referer"] = process.env.AI_SITE_URL || "https://xgodxx999.github.io/XG/";
-      headers["X-Title"] = "XG Prime";
-    }
-    const upstream = await fetch(AI_BASE_URL, {
-      method: "POST",
-      headers,
-      signal: AbortSignal.timeout(90_000),
-      body: JSON.stringify({
-        model: AI_MODEL,
-        messages,
-        stream: input.stream === true,
-        temperature: Number.isFinite(Number(input.temperature)) ? Math.min(1, Math.max(0, Number(input.temperature))) : 0.7,
-        max_tokens: 1000
-      })
-    });
-
-    if (!upstream.ok || input.stream !== true) {
-      const body = await upstream.text();
-      res.writeHead(upstream.status, {
-        "Content-Type": upstream.headers.get("content-type") || "application/json; charset=utf-8",
-        "Cache-Control": "no-store",
-        "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
-        "Vary": "Origin"
-      });
-      return res.end(body);
-    }
-
-    res.writeHead(200, {
-      "Content-Type": "text/event-stream; charset=utf-8",
-      "Cache-Control": "no-cache, no-transform",
-      "Connection": "keep-alive",
-      "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
-      "Vary": "Origin"
-    });
-    const reader = upstream.body.getReader();
-    while (true) {
-      const { value, done } = await reader.read();
-      if (done) break;
-      if (!res.write(Buffer.from(value))) await new Promise(resolve => res.once("drain", resolve));
-    }
-    res.end();
+    await handleGemini(req, res, input, messages);
   } catch (error) {
     if (!res.headersSent) {
-      const timedOut = error && error.name === "TimeoutError";
-      send(res, timedOut ? 504 : 502, { error: timedOut ? "AI provider timed out" : "AI provider unavailable" });
+      const timeout = error?.name === 'TimeoutError';
+      json(res, timeout ? 504 : 502, { error: timeout ? 'AI provider timed out' : 'AI provider unavailable' });
     } else {
       res.end();
     }
   }
 });
 
-server.listen(PORT, "0.0.0.0", () => console.log("XG AI Gateway listening on " + PORT));
+server.listen(PORT, '0.0.0.0', () => {
+  console.log('XG Prime Gemini gateway listening on port ' + PORT);
+});
