@@ -36,11 +36,19 @@ function applyAction(a){
   case 'url_encode':setValue('codecInput',a.text);click('urlEncode');break;
   case 'url_decode':setValue('codecInput',a.text);click('urlDecode');break;
   case 'text_stats':setValue('textUtilityInput',a.text);break;
+  case 'countdown':setValue('countdownMinutes',a.minutes);click('countdownStart');break;
+  case 'unit_convert':setValue('unitCategory',a.category);setValue('unitValue',a.value);setValue('unitFrom',a.from);setValue('unitTo',a.to);click('unitConvert');break;
+  case 'exchange_convert':setValue('exchangeAmount',a.amount);setValue('exchangeFrom',a.from);setValue('exchangeTo',a.to);click('exchangeRun');break;
+  case 'text_transform':setValue('textUtilityInput',a.text);{const b=document.querySelector('[data-text-action="'+a.action+'"]');if(!b)throw Error('不支持的文本处理方式');b.click();}break;
+  case 'generate_uuid':click('uuidGenerate');break;
+  case 'generate_password':setValue('passwordLength',a.length||16);click('passwordGenerate');break;
+  case 'image_options':setValue('xgImageMax',a.max||1600);setValue('xgImageQuality',a.quality||82);setValue('xgImageFormat',a.format||'image/webp');break;
+  case 'open_search':setValue('browserInput',a.query);click('browserOpen');break;
   default:throw Error('此操作暂不支持自动执行：'+String(t));
  }
 }
 function actionLabel(a){
- const names={add_goal:'新增目标',add_note:'保存备忘',add_task:'创建任务',add_habit:'添加习惯',add_calendar_event:'添加日程',add_transaction:'新增收支记录',translate:'执行翻译',calculate:'执行计算',format_json:'格式化 JSON',encode_base64:'Base64 编码',decode_base64:'Base64 解码',start_focus:'启动专注计时',reset_focus:'重置专注计时',url_encode:'URL 编码',url_decode:'URL 解码',text_stats:'填入文本处理工具'};
+ const names={add_goal:'新增目标',add_note:'保存备忘',add_task:'创建任务',add_habit:'添加习惯',add_calendar_event:'添加日程',add_transaction:'新增收支记录',translate:'执行翻译',calculate:'执行计算',format_json:'格式化 JSON',encode_base64:'Base64 编码',decode_base64:'Base64 解码',start_focus:'启动专注计时',reset_focus:'重置专注计时',url_encode:'URL 编码',url_decode:'URL 解码',text_stats:'填入文本处理工具',countdown:'启动倒计时',unit_convert:'执行单位换算',exchange_convert:'执行汇率换算',text_transform:'执行文本处理',generate_uuid:'生成 UUID',generate_password:'本机生成密码',image_options:'设置图片压缩参数',open_search:'打开浏览器搜索'};
  return names[a.type]||a.type;
 }
 function normalizePlan(raw){
