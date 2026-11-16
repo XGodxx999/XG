@@ -29,7 +29,7 @@ document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>go(b.dataset.ta
 document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>go(b.dataset.go));
 
 function openToolWorkspace(key){const catalog=$('toolCatalog'),detail=$('toolDetail');if(!catalog||!detail)return;catalog.hidden=true;detail.hidden=false;document.querySelectorAll('.tool-section').forEach(x=>x.classList.toggle('tool-active',x.dataset.toolSection===key));const meta={calc:['计算与换算','科学计算器与多类别单位换算'],focus:['专注计时','番茄专注与休息计时器'],language:['语言工具','离线英汉词汇查询'],browser:['浏览与搜索','网址直达与网页搜索'],notes:['快速备忘','本地记录、搜索与置顶'],calendar:['日历中心','月历视图与日程管理'],data:['数据中心','完整备份、恢复与隐私管理'],productivity:['效率工具箱','秒表、倒计时、文本处理与密码生成'],developer:['开发者工具','JSON、Base64、文本差异比较与 UUID'],network:['网络诊断','连接状态、当前网站延迟与公网 IP 查询'],ai:['AI 工作台','连接兼容模型服务，进行智能对话与提示词管理'],exchange:['汇率换算','在线参考汇率换算'],creative:['图片与创作','本地图片压缩、颜色转换与 Markdown 预览']};$('toolDetailTitle').textContent=(meta[key]||['工具','完整操作界面'])[0];$('toolDetailDesc').textContent=(meta[key]||['',''])[1];go('tools');if(key==='calendar')drawCalendar();updateTopBack();}
-function closeToolWorkspace(){if($('toolDetail'))$('toolDetail').hidden=true;if($('toolCatalog'))$('toolCatalog').hidden=false;document.querySelectorAll('.tool-section').forEach(x=>x.classList.remove('tool-active'))updateTopBack();}
+function closeToolWorkspace(){if($('toolDetail'))$('toolDetail').hidden=true;if($('toolCatalog'))$('toolCatalog').hidden=false;document.querySelectorAll('.tool-section').forEach(x=>x.classList.remove('tool-active'));updateTopBack();}
 $('toolExport').onclick=()=>$('export').click();$('toolImport').onclick=()=>$('importBtn').click();
 document.querySelectorAll('[data-open-tool]').forEach(b=>b.addEventListener('click',()=>openToolWorkspace(b.dataset.openTool)));
 function openCenter(id){if(id==='me-data'){go('me');openMeView('data');return}if(id==='calendar'||id==='data'){openToolWorkspace(id);return}go(id)}
@@ -182,7 +182,7 @@ $('exchangeRun').onclick=async()=>{const from=$('exchangeFrom').value,to=$('exch
 function buildFeedbackBody(){
  const type=$('feedbackType').value,title=$('feedbackTitle').value.trim(),detail=$('feedbackDetail').value.trim(),device=$('feedbackDevice').value.trim();
  if(!title||!detail){$('feedbackStatus').textContent='请填写标题和具体内容。';return null}
- return {title:'['+type+'] '+title,body:'### 反馈类型\n'+type+'\n\n### 具体内容\n'+detail+'\n\n### 设备与浏览器\n'+(device||'未填写')+'\n\n### 应用版本\nXG Prime 5.7 Web\n\n---\n由 XG Prime 反馈入口生成；提交前请检查内容，不要包含个人隐私。'};
+ return {title:'['+type+'] '+title,body:'### 反馈类型\n'+type+'\n\n### 具体内容\n'+detail+'\n\n### 设备与浏览器\n'+(device||'未填写')+'\n\n### 应用版本\nXG Prime 5.7.1 Web\n\n---\n由 XG Prime 反馈入口生成；提交前请检查内容，不要包含个人隐私。'};
 }
 $('feedbackForm').addEventListener('submit',e=>{
  e.preventDefault();const item=buildFeedbackBody();if(!item)return;
