@@ -14,7 +14,7 @@ function build(){
  const top=document.createElement('div');top.style.cssText='padding:16px;border-bottom:1px solid #303b4a';
  input=document.createElement('input');input.type='search';input.placeholder='搜索页面、工具或功能…';input.setAttribute('aria-label','搜索页面和工具');input.style.cssText='width:100%;padding:14px 15px;border-radius:13px;border:1px solid #3c4859;background:#080d15;color:#fff;font:inherit;outline:none';top.append(input);
  const hint=document.createElement('div');hint.textContent='输入关键词快速跳转 · ↑↓ 选择 · Enter 打开 · Esc 关闭';hint.style.cssText='font-size:11px;color:#98a6b8;margin-top:10px';top.append(hint);
- list=document.createElement('div');list.style.cssText='overflow:auto;padding:8px;overscroll-behavior:contain';panel.append(top,list);overlay.append(panel);overlay.style.display='none';document.body.append(overlay);
+ list=document.createElement('div');list.style.cssText='overflow:auto;padding:8px;overscroll-behavior:contain';list.addEventListener('keydown',e=>{if(e.key==='Tab'){e.preventDefault();input.focus()}else if(e.key==='ArrowDown'){e.preventDefault();move(1);list.querySelectorAll('button')[active]?.focus()}else if(e.key==='ArrowUp'){e.preventDefault();move(-1);list.querySelectorAll('button')[active]?.focus()}else if(e.key==='Escape'){hide()}});panel.append(top,list);overlay.append(panel);overlay.style.display='none';document.body.append(overlay);
  open.addEventListener('click',show);overlay.addEventListener('click',e=>{if(e.target===overlay)hide()});
  input.addEventListener('input',render);input.addEventListener('keydown',e=>{if(e.key==='Tab'){e.preventDefault();const buttons=list.querySelectorAll('button');if(buttons.length)buttons[active>=0?active:0].focus();}else if(e.key==='ArrowDown'){e.preventDefault();move(1)}else if(e.key==='ArrowUp'){e.preventDefault();move(-1)}else if(e.key==='Enter'){e.preventDefault();choose()}else if(e.key==='Escape'){hide()}});
 }
@@ -24,8 +24,8 @@ function collect(){
  document.querySelectorAll('.tool-section[data-tool-section]').forEach(el=>{const id=el.dataset.toolSection;found.push({kind:'tool',id,label:toolNames[id]||el.querySelector('h2,h3')?.textContent?.trim()||id,detail:'工具',keywords:(toolNames[id]||'')+' '+id+' '+(el.innerText||'').slice(0,160)})});
  return found;
 }
-function show(){if(!overlay)build();items=collect();overlay.hidden=false;overlay.style.display='flex';input.value='';render();requestAnimationFrame(()=>input.focus())}
-function hide(){if(overlay){overlay.hidden=true;overlay.style.display='none'}}
+function show(){if(!overlay)build();lastFocus=document.activeElement;items=collect();overlay.hidden=false;overlay.style.display='flex';input.value='';render();requestAnimationFrame(()=>input.focus())}
+function hide(){if(overlay){overlay.hidden=true;overlay.style.display='none';if(lastFocus&&typeof lastFocus.focus==='function')lastFocus.focus();lastFocus=null}}
 function render(){
  const q=input.value.trim().toLocaleLowerCase();const matches=items.filter(x=>!q||(x.label+' '+x.keywords+' '+x.detail).toLocaleLowerCase().includes(q)).slice(0,30);active=matches.length?0:-1;list.replaceChildren();
  if(!matches.length){const empty=document.createElement('p');empty.textContent='没有找到匹配的页面或工具';empty.style.cssText='padding:18px;color:#aab7c8;text-align:center';list.append(empty);return}
@@ -34,7 +34,6 @@ function render(){
 function highlight(){[...list.querySelectorAll('button')].forEach((b,i)=>{b.style.background=i===active?'#263448':'transparent';b.setAttribute('aria-selected',String(i===active));})}
 function move(d){const n=list.querySelectorAll('button').length;if(!n)return;active=(active+d+n)%n;highlight();list.querySelectorAll('button')[active]?.scrollIntoView({block:'nearest'})}
 function choose(){const b=list.querySelectorAll('button')[active];if(b)b.click()}
-list?.addEventListener('keydown',e=>{if(e.key==='Tab'){e.preventDefault();input.focus()}else if(e.key==='ArrowDown'){e.preventDefault();move(1);list.querySelectorAll('button')[active]?.focus()}else if(e.key==='ArrowUp'){e.preventDefault();move(-1);list.querySelectorAll('button')[active]?.focus()}else if(e.key==='Escape')hide()});
 function openItem(item){
  hide();
  if(item.kind==='page'){if(typeof window.go==='function')window.go(item.id);else document.querySelector('[data-tab="'+item.id+'"]')?.click();if(item.id==='tools'&&typeof window.closeToolWorkspace==='function')window.closeToolWorkspace();}
