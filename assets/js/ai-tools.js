@@ -47,6 +47,32 @@ function applyAction(a){
   default:throw Error('此操作暂不支持自动执行：'+String(t));
  }
 }
+
+function validateAction(a) {
+ if (!a || typeof a !== 'object' || Array.isArray(a)) return '操作格式无效';
+ const str = (v, max) => typeof v === 'string' && v.trim().length > 0 && v.length <= (max || 1200);
+ const num = v => Number.isFinite(Number(v));
+ const date = v => typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v) && !Number.isNaN(Date.parse(v));
+ switch (a.type) {
+  case 'add_goal': return str(a.title,160) ? '' : '目标标题无效';
+  case 'add_note': return str(a.text,5000) ? '' : '备忘内容无效';
+  case 'add_task': return str(a.title,200) && (!a.due || date(a.due)) && (!a.priority || ['normal','high','low'].includes(a.priority)) ? '' : '任务字段无效';
+  case 'add_habit': return str(a.name,100) ? '' : '习惯名称无效';
+  case 'add_calendar_event': return str(a.title,160) && date(a.date) && (!a.time || /^([01]\d|2[0-3]):[0-5]\d$/.test(a.time)) && (!a.note || str(a.note,1000)) ? '' : '日程字段无效或日期缺失';
+  case 'add_transaction': return ['income','expense'].includes(a.kind) && num(a.amount) && Number(a.amount)>0 && Number(a.amount)<=100000000 && (!a.memo || str(a.memo,200)) ? '' : '收支方向或金额无效';
+  case 'translate': case 'format_json': case 'encode_base64': case 'decode_base64': case 'url_encode': case 'url_decode': case 'text_stats': return str(a.text,8000) ? '' : '文本内容无效';
+  case 'calculate': return str(a.expression,300) ? '' : '计算表达式无效';
+  case 'start_focus': case 'reset_focus': case 'generate_uuid': return '';
+  case 'countdown': return num(a.minutes) && Number(a.minutes)>=1 && Number(a.minutes)<=1440 ? '' : '倒计时必须为 1–1440 分钟';
+  case 'unit_convert': return str(a.category,40) && num(a.value) && str(a.from,40) && str(a.to,40) ? '' : '单位换算参数无效';
+  case 'exchange_convert': return num(a.amount) && Number(a.amount)>0 && Number(a.amount)<=100000000 && str(a.from,8) && str(a.to,8) ? '' : '汇率换算参数无效';
+  case 'text_transform': return ['upper','lower','trim'].includes(a.action) && str(a.text,8000) ? '' : '文本处理参数无效';
+  case 'generate_password': return num(a.length) && Number(a.length)>=8 && Number(a.length)<=64 ? '' : '密码长度必须为 8–64';
+  case 'image_options': return num(a.max) && Number(a.max)>=320 && Number(a.max)<=8192 && num(a.quality) && Number(a.quality)>=10 && Number(a.quality)<=100 && ['image/webp','image/jpeg','image/png'].includes(a.format) ? '' : '图片参数无效';
+  default: return '不允许的操作类型';
+ }
+}
+
 function actionLabel(a){
  const names={add_goal:'新增目标',add_note:'保存备忘',add_task:'创建任务',add_habit:'添加习惯',add_calendar_event:'添加日程',add_transaction:'新增收支记录',translate:'执行翻译',calculate:'执行计算',format_json:'格式化 JSON',encode_base64:'Base64 编码',decode_base64:'Base64 解码',start_focus:'启动专注计时',reset_focus:'重置专注计时',url_encode:'URL 编码',url_decode:'URL 解码',text_stats:'填入文本处理工具',countdown:'启动倒计时',unit_convert:'执行单位换算',exchange_convert:'执行汇率换算',text_transform:'执行文本处理',generate_uuid:'生成 UUID',generate_password:'本机生成密码',image_options:'设置图片压缩参数',open_search:'打开浏览器搜索'};
  return names[a.type]||a.type;
@@ -76,8 +102,9 @@ async function ask(root,button){
   const response=await fetch(API+'/api/ai',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages,stream:false,temperature:0.2})});
   const data=await response.json().catch(()=>({}));if(!response.ok)throw Error(data.error||('HTTP '+response.status));
   let raw=data.choices?.[0]?.message?.content;if(Array.isArray(raw))raw=raw.map(x=>x.text||'').join('');if(typeof raw!=='string'||!raw.trim())throw Error('模型没有返回有效内容');
-  const plan=normalizePlan(raw);box.replaceChildren();
+  const plan=normalizePlan(raw);const rejected=[];plan.actions=plan.actions.filter(a=>{const reason=validateAction(a);if(reason){rejected.push((a&&a.type||'未知操作')+'：'+reason);return false;}return true;});box.replaceChildren();
   const msg=document.createElement('p');msg.textContent=plan.message;box.append(msg);
+  if(rejected.length){const warn=document.createElement('p');warn.textContent='已拦截无效或不安全的操作：'+rejected.join('；');box.append(warn);}
   if(plan.actions.length){
    const list=document.createElement('ol');plan.actions.forEach(a=>{const li=document.createElement('li');li.textContent=actionLabel(a)+'：'+JSON.stringify(a);list.append(li)});box.append(list);
    const run=document.createElement('button');run.type='button';run.className='btn';run.textContent='确认并执行 '+plan.actions.length+' 项操作';run.addEventListener('click',()=>{
@@ -95,5 +122,7 @@ function add(root){
  const head=root.querySelector('.cathead')||root.querySelector('.pageHead');if(!head)return;
  const button=document.createElement('button');button.type='button';button.className='btn secondary';button.textContent='AI 辅助此工具';button.dataset.aiToolButton='true';button.style.cssText='margin:10px 0;max-width:100%';button.addEventListener('click',()=>ask(root,button));head.append(button);
 }
+function scan(node){if(!node)return;if(node.nodeType===1){if(node.matches('.tool-section[data-tool-section],.page[id]'))add(node);if(node.querySelectorAll)node.querySelectorAll('.tool-section[data-tool-section],.page[id]').forEach(add);}}
 document.querySelectorAll('.tool-section[data-tool-section],.page[id]').forEach(add);
+new MutationObserver(records=>records.forEach(r=>r.addedNodes.forEach(scan))).observe(document.body,{childList:true,subtree:true});
 })();
