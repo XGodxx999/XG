@@ -8,7 +8,7 @@ function labelFor(root){return toolLabels[root.dataset.toolSection]||pageLabels[
 function collect(root){
  const out=[];
  root.querySelectorAll('input,textarea,select').forEach(el=>{
-  if(['password','file','hidden'].includes(el.type)||el.disabled)return;
+  if(['password','file','hidden'].includes(el.type)||el.disabled||el.hasAttribute('data-private')||el.autocomplete==='current-password')return;
   const v=el.type==='checkbox'||el.type==='radio'?(el.checked?'已选中':'未选中'):String(el.value||'').trim();
   if(v)out.push((el.getAttribute('aria-label')||el.placeholder||el.id||el.name||'字段')+': '+v.slice(0,1400));
  });
@@ -67,8 +67,8 @@ function validateAction(a) {
   case 'unit_convert': return str(a.category,40) && num(a.value) && str(a.from,40) && str(a.to,40) ? '' : '单位换算参数无效';
   case 'exchange_convert': return num(a.amount) && Number(a.amount)>0 && Number(a.amount)<=100000000 && str(a.from,8) && str(a.to,8) ? '' : '汇率换算参数无效';
   case 'text_transform': return ['upper','lower','trim'].includes(a.action) && str(a.text,8000) ? '' : '文本处理参数无效';
-  case 'generate_password': return num(a.length) && Number(a.length)>=8 && Number(a.length)<=64 ? '' : '密码长度必须为 8–64';
-  case 'image_options': return num(a.max) && Number(a.max)>=320 && Number(a.max)<=8192 && num(a.quality) && Number(a.quality)>=10 && Number(a.quality)<=100 && ['image/webp','image/jpeg','image/png'].includes(a.format) ? '' : '图片参数无效';
+  case 'generate_password': return (a.length===undefined || (num(a.length) && Number(a.length)>=8 && Number(a.length)<=64)) ? '' : '密码长度必须为 8–64';
+  case 'image_options': { const max=a.max??1600, quality=a.quality??82, format=a.format??'image/webp'; return num(max) && Number(max)>=320 && Number(max)<=8192 && num(quality) && Number(quality)>=10 && Number(quality)<=100 && ['image/webp','image/jpeg','image/png'].includes(format) ? '' : '图片参数无效'; }
   default: return '不允许的操作类型';
  }
 }
