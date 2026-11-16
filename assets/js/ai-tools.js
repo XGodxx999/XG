@@ -29,17 +29,18 @@ function applyAction(a){
   case 'translate':setValue('translateInput',a.text);click('translateBtn');break;
   case 'calculate':setValue('calcExpression',a.expression);click('calculate');break;
   case 'format_json':setValue('jsonInput',a.text);click('jsonFormat');break;
-  case 'encode_base64':setValue('base64Input',a.text);click('base64Encode');break;
-  case 'decode_base64':setValue('base64Input',a.text);click('base64Decode');break;
-  case 'compare_text':setValue('diffBefore',a.before);setValue('diffAfter',a.after);click('diffRun');break;
+  case 'encode_base64':setValue('codecInput',a.text);click('base64Encode');break;
+  case 'decode_base64':setValue('codecInput',a.text);click('base64Decode');break;
   case 'start_focus':click('focusStart');break;
   case 'reset_focus':click('focusReset');break;
+  case 'url_encode':setValue('codecInput',a.text);click('urlEncode');break;
+  case 'url_decode':setValue('codecInput',a.text);click('urlDecode');break;
   case 'text_stats':setValue('textUtilityInput',a.text);break;
   default:throw Error('此操作暂不支持自动执行：'+String(t));
  }
 }
 function actionLabel(a){
- const names={add_goal:'新增目标',add_note:'保存备忘',add_task:'创建任务',add_habit:'添加习惯',add_calendar_event:'添加日程',add_transaction:'新增收支记录',translate:'执行翻译',calculate:'执行计算',format_json:'格式化 JSON',encode_base64:'Base64 编码',decode_base64:'Base64 解码',compare_text:'比较两段文本',start_focus:'启动专注计时',reset_focus:'重置专注计时',text_stats:'填入文本处理工具'};
+ const names={add_goal:'新增目标',add_note:'保存备忘',add_task:'创建任务',add_habit:'添加习惯',add_calendar_event:'添加日程',add_transaction:'新增收支记录',translate:'执行翻译',calculate:'执行计算',format_json:'格式化 JSON',encode_base64:'Base64 编码',decode_base64:'Base64 解码',start_focus:'启动专注计时',reset_focus:'重置专注计时',url_encode:'URL 编码',url_decode:'URL 解码',text_stats:'填入文本处理工具'};
  return names[a.type]||a.type;
 }
 function normalizePlan(raw){
@@ -56,7 +57,7 @@ async function ask(root,button){
  const context=collect(root);
  const include=context?window.confirm('检测到当前工具的输入或结果。\n确定：发送给 AI；取消：只发送任务描述。'):false;
  const messages=[
-  {role:'system',content:'你是 XG Prime 的工具执行助手。根据当前工具和用户要求，返回严格 JSON，不要使用 Markdown 代码块。格式：{"message":"简短说明","actions":[{"type":"...","title":"..."}]}。只允许以下操作类型及字段：add_goal{title}; add_note{text}; add_task{title,due可选YYYY-MM-DD,priority可选normal/high/low}; add_habit{name}; add_calendar_event{title,date必填YYYY-MM-DD,time可选HH:MM,note可选}; add_transaction{kind为income或expense,amount为正数,memo可选}; translate{text}; calculate{expression}; format_json{text}; encode_base64{text}; decode_base64{text}; compare_text{before,after}; start_focus{}; reset_focus{}; text_stats{text}。每次最多提出5个操作。不要提出删除、导入备份、清空数据、外部支付、投资买卖、发送消息、打开外部网站或上传文件等操作。只提出用户明确要求的操作，不得擅自新增。财务记录必须严格按用户提供的金额和收支方向。日期缺失时不要猜测，改为在message中询问。对于当前页面不具备的控件，不要提出操作。若任务仅需解释或分析，actions返回空数组。'},
+  {role:'system',content:'你是 XG Prime 的工具执行助手。根据当前工具和用户要求，返回严格 JSON，不要使用 Markdown 代码块。格式：{"message":"简短说明","actions":[{"type":"...","title":"..."}]}。只允许以下操作类型及字段：add_goal{title}; add_note{text}; add_task{title,due可选YYYY-MM-DD,priority可选normal/high/low}; add_habit{name}; add_calendar_event{title,date必填YYYY-MM-DD,time可选HH:MM,note可选}; add_transaction{kind为income或expense,amount为正数,memo可选}; translate{text}; calculate{expression}; format_json{text}; encode_base64{text}; decode_base64{text}; start_focus{}; reset_focus{}; text_stats{text}。每次最多提出5个操作。不要提出删除、导入备份、清空数据、外部支付、投资买卖、发送消息、打开外部网站或上传文件等操作。只提出用户明确要求的操作，不得擅自新增。财务记录必须严格按用户提供的金额和收支方向。日期缺失时不要猜测，改为在message中询问。对于当前页面不具备的控件，不要提出操作。若任务仅需解释或分析，actions返回空数组。'},
   {role:'user',content:'当前页面：'+labelFor(root)+'\n用户要求：'+task.trim()+(include?'\n用户确认提供的页面输入与结果：\n'+context:'')}
  ];
  const original=button.textContent;button.disabled=true;button.textContent='AI 处理中…';
