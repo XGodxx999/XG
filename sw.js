@@ -1,5 +1,5 @@
 'use strict';
-const CACHE='xg-prime-v72';
+const CACHE='xg-prime-v73';
 const SHELL=[
   './',
   './index.html',
@@ -7,7 +7,7 @@ const SHELL=[
   './icon.png',
   './icon.png?v=6',
   './icon.svg',
-  './assets/js/ai-tools.js?v=8',
+  './assets/js/ai-tools.js?v=9',
   './assets/js/command-center.js?v=4'
 ];
 const STATIC_DESTINATIONS=new Set(['script','style','image','font']);
