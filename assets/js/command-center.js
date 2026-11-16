@@ -3,7 +3,7 @@
 const $=s=>document.querySelector(s);
 const pageNames={home:'首页 总览',goals:'目标',learn:'英语学习',money:'财务管理',career:'职业发展',workspace:'任务 习惯',tools:'工具中心',me:'个人中心'};
 const toolNames={calc:'计算器 单位换算',focus:'专注计时',language:'翻译 词汇',browser:'浏览器 搜索',notes:'笔记 备忘',calendar:'日历 日程',data:'数据 备份',productivity:'效率 倒计时 密码',developer:'开发者 JSON Base64 UUID',network:'网络诊断',ai:'AI 助手',exchange:'汇率',creative:'图片 创作'};
-let overlay,input,list,items=[],active=-1;
+let overlay,input,list,items=[],active=-1,lastFocus=null;
 function build(){
  const header=$('.topbar');if(!header||$('#xgCommandOpen'))return;
  const actions=header.querySelector('div:last-child');
@@ -16,7 +16,7 @@ function build(){
  const hint=document.createElement('div');hint.textContent='输入关键词快速跳转 · ↑↓ 选择 · Enter 打开 · Esc 关闭';hint.style.cssText='font-size:11px;color:#98a6b8;margin-top:10px';top.append(hint);
  list=document.createElement('div');list.style.cssText='overflow:auto;padding:8px;overscroll-behavior:contain';panel.append(top,list);overlay.append(panel);overlay.style.display='none';document.body.append(overlay);
  open.addEventListener('click',show);overlay.addEventListener('click',e=>{if(e.target===overlay)hide()});
- input.addEventListener('input',render);input.addEventListener('keydown',e=>{if(e.key==='ArrowDown'){e.preventDefault();move(1)}else if(e.key==='ArrowUp'){e.preventDefault();move(-1)}else if(e.key==='Enter'){e.preventDefault();choose()}else if(e.key==='Escape'){hide()}});
+ input.addEventListener('input',render);input.addEventListener('keydown',e=>{if(e.key==='Tab'){e.preventDefault();const buttons=list.querySelectorAll('button');if(buttons.length)buttons[active>=0?active:0].focus();}else if(e.key==='ArrowDown'){e.preventDefault();move(1)}else if(e.key==='ArrowUp'){e.preventDefault();move(-1)}else if(e.key==='Enter'){e.preventDefault();choose()}else if(e.key==='Escape'){hide()}});
 }
 function collect(){
  const found=[];
@@ -29,11 +29,12 @@ function hide(){if(overlay){overlay.hidden=true;overlay.style.display='none'}}
 function render(){
  const q=input.value.trim().toLocaleLowerCase();const matches=items.filter(x=>!q||(x.label+' '+x.keywords+' '+x.detail).toLocaleLowerCase().includes(q)).slice(0,30);active=matches.length?0:-1;list.replaceChildren();
  if(!matches.length){const empty=document.createElement('p');empty.textContent='没有找到匹配的页面或工具';empty.style.cssText='padding:18px;color:#aab7c8;text-align:center';list.append(empty);return}
- matches.forEach((item,i)=>{const b=document.createElement('button');b.type='button';b.style.cssText='display:flex;align-items:center;justify-content:space-between;width:100%;text-align:left;padding:13px 14px;border:0;border-radius:12px;background:'+(i===active?'#263448':'transparent')+';color:#f4f7fb;cursor:pointer;font:inherit';const left=document.createElement('span');left.textContent=item.label;const right=document.createElement('small');right.textContent=item.detail;right.style.color='#9eacbf';b.append(left,right);b.addEventListener('mouseenter',()=>{active=i;highlight()});b.addEventListener('click',()=>openItem(item));list.append(b)});
+ matches.forEach((item,i)=>{const b=document.createElement('button');b.type='button';b.setAttribute('role','option');b.setAttribute('aria-selected',String(i===active));b.style.cssText='display:flex;align-items:center;justify-content:space-between;width:100%;text-align:left;padding:13px 14px;border:0;border-radius:12px;background:'+(i===active?'#263448':'transparent')+';color:#f4f7fb;cursor:pointer;font:inherit';const left=document.createElement('span');left.textContent=item.label;const right=document.createElement('small');right.textContent=item.detail;right.style.color='#9eacbf';b.append(left,right);b.addEventListener('mouseenter',()=>{active=i;highlight()});b.addEventListener('click',()=>openItem(item));list.append(b)});
 }
-function highlight(){[...list.querySelectorAll('button')].forEach((b,i)=>b.style.background=i===active?'#263448':'transparent')}
+function highlight(){[...list.querySelectorAll('button')].forEach((b,i)=>{b.style.background=i===active?'#263448':'transparent';b.setAttribute('aria-selected',String(i===active));})}
 function move(d){const n=list.querySelectorAll('button').length;if(!n)return;active=(active+d+n)%n;highlight();list.querySelectorAll('button')[active]?.scrollIntoView({block:'nearest'})}
 function choose(){const b=list.querySelectorAll('button')[active];if(b)b.click()}
+list?.addEventListener('keydown',e=>{if(e.key==='Tab'){e.preventDefault();input.focus()}else if(e.key==='ArrowDown'){e.preventDefault();move(1);list.querySelectorAll('button')[active]?.focus()}else if(e.key==='ArrowUp'){e.preventDefault();move(-1);list.querySelectorAll('button')[active]?.focus()}else if(e.key==='Escape')hide()});
 function openItem(item){
  hide();
  if(item.kind==='page'){if(typeof window.go==='function')window.go(item.id);else document.querySelector('[data-tab="'+item.id+'"]')?.click();if(item.id==='tools'&&typeof window.closeToolWorkspace==='function')window.closeToolWorkspace();}
