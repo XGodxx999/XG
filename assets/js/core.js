@@ -22,13 +22,15 @@ function render(){
  const tasks=['了解制冷循环与基础原理','学习 HVAC 常见工具与安全规范','学习铜管加工、焊接与保温','学习电气基础与控制线路','练习设备安装、维护与故障排查','整理培训证明与工作经历'];
  $('careerList').innerHTML=tasks.map((x,i)=>'<div class="listrow"><input type="checkbox" data-career="'+i+'" '+(data.career[i]?'checked':'')+'><span class="'+(data.career[i]?'done':'')+'">'+x+'</span></div>').join('');
 }
-let prevPage=null;function go(id){const cur=document.querySelector('.page.active');if(cur&&cur.id!==id)prevPage=cur.id;document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id===id));document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===id));window.scrollTo({top:0,behavior:'smooth'})}function goBack(){go(prevPage||'home')}
-document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>go(b.dataset.tab));document.querySelectorAll('.pageBack').forEach(b=>b.onclick=()=>goBack());
+let prevPage=null;function go(id){const cur=document.querySelector('.page.active');if(cur&&cur.id!==id)prevPage=cur.id;if(id==='tools')closeToolWorkspace();document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id===id));document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===id));window.scrollTo({top:0,behavior:'smooth'});updateTopBack()}function goBack(){go(prevPage||'home')}
+function updateTopBack(){const b=document.getElementById('topBackBtn'),h=document.querySelector('.topbar');if(!b||!h)return;const sub=['explore','workspace','goals','learn','money','career'];const cur=document.querySelector('.page.active');const d=document.getElementById('toolDetail');h.classList.toggle('show-back',!!(d&&!d.hidden)||!!(cur&&sub.includes(cur.id)))}
+document.getElementById('topBackBtn').onclick=()=>{const d=document.getElementById('toolDetail');if(d&&!d.hidden)closeToolWorkspace();else goBack()};updateTopBack();
+document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>go(b.dataset.tab));
 document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>go(b.dataset.go));
 
-function openToolWorkspace(key){const catalog=$('toolCatalog'),detail=$('toolDetail');if(!catalog||!detail)return;catalog.hidden=true;detail.hidden=false;document.querySelectorAll('.tool-section').forEach(x=>x.classList.toggle('tool-active',x.dataset.toolSection===key));const meta={calc:['计算与换算','科学计算器与多类别单位换算'],focus:['专注计时','番茄专注与休息计时器'],language:['语言工具','离线英汉词汇查询'],browser:['浏览与搜索','网址直达与网页搜索'],notes:['快速备忘','本地记录、搜索与置顶'],calendar:['日历中心','月历视图与日程管理'],data:['数据中心','完整备份、恢复与隐私管理'],productivity:['效率工具箱','秒表、倒计时、文本处理与密码生成'],developer:['开发者工具','JSON、Base64、文本差异比较与 UUID'],network:['网络诊断','连接状态、当前网站延迟与公网 IP 查询'],ai:['AI 工作台','连接兼容模型服务，进行智能对话与提示词管理'],exchange:['汇率换算','在线参考汇率换算'],creative:['图片与创作','本地图片压缩、颜色转换与 Markdown 预览']};$('toolDetailTitle').textContent=(meta[key]||['工具','完整操作界面'])[0];$('toolDetailDesc').textContent=(meta[key]||['',''])[1];go('tools');if(key==='calendar')drawCalendar();}
-function closeToolWorkspace(){if($('toolDetail'))$('toolDetail').hidden=true;if($('toolCatalog'))$('toolCatalog').hidden=false;document.querySelectorAll('.tool-section').forEach(x=>x.classList.remove('tool-active'))}
-$('toolBack').onclick=closeToolWorkspace;$('toolExport').onclick=()=>$('export').click();$('toolImport').onclick=()=>$('importBtn').click();
+function openToolWorkspace(key){const catalog=$('toolCatalog'),detail=$('toolDetail');if(!catalog||!detail)return;catalog.hidden=true;detail.hidden=false;document.querySelectorAll('.tool-section').forEach(x=>x.classList.toggle('tool-active',x.dataset.toolSection===key));const meta={calc:['计算与换算','科学计算器与多类别单位换算'],focus:['专注计时','番茄专注与休息计时器'],language:['语言工具','离线英汉词汇查询'],browser:['浏览与搜索','网址直达与网页搜索'],notes:['快速备忘','本地记录、搜索与置顶'],calendar:['日历中心','月历视图与日程管理'],data:['数据中心','完整备份、恢复与隐私管理'],productivity:['效率工具箱','秒表、倒计时、文本处理与密码生成'],developer:['开发者工具','JSON、Base64、文本差异比较与 UUID'],network:['网络诊断','连接状态、当前网站延迟与公网 IP 查询'],ai:['AI 工作台','连接兼容模型服务，进行智能对话与提示词管理'],exchange:['汇率换算','在线参考汇率换算'],creative:['图片与创作','本地图片压缩、颜色转换与 Markdown 预览']};$('toolDetailTitle').textContent=(meta[key]||['工具','完整操作界面'])[0];$('toolDetailDesc').textContent=(meta[key]||['',''])[1];go('tools');if(key==='calendar')drawCalendar();updateTopBack();}
+function closeToolWorkspace(){if($('toolDetail'))$('toolDetail').hidden=true;if($('toolCatalog'))$('toolCatalog').hidden=false;document.querySelectorAll('.tool-section').forEach(x=>x.classList.remove('tool-active'))updateTopBack();}
+$('toolExport').onclick=()=>$('export').click();$('toolImport').onclick=()=>$('importBtn').click();
 document.querySelectorAll('[data-open-tool]').forEach(b=>b.addEventListener('click',()=>openToolWorkspace(b.dataset.openTool)));
 function openCenter(id){if(id==='me-data'){go('me');openMeView('data');return}if(id==='calendar'||id==='data'){openToolWorkspace(id);return}go(id)}
 document.querySelectorAll('[data-center]').forEach(b=>b.addEventListener('click',()=>openCenter(b.dataset.center)));
@@ -180,7 +182,7 @@ $('exchangeRun').onclick=async()=>{const from=$('exchangeFrom').value,to=$('exch
 function buildFeedbackBody(){
  const type=$('feedbackType').value,title=$('feedbackTitle').value.trim(),detail=$('feedbackDetail').value.trim(),device=$('feedbackDevice').value.trim();
  if(!title||!detail){$('feedbackStatus').textContent='请填写标题和具体内容。';return null}
- return {title:'['+type+'] '+title,body:'### 反馈类型\n'+type+'\n\n### 具体内容\n'+detail+'\n\n### 设备与浏览器\n'+(device||'未填写')+'\n\n### 应用版本\nXG Prime 5.6 Web\n\n---\n由 XG Prime 反馈入口生成；提交前请检查内容，不要包含个人隐私。'};
+ return {title:'['+type+'] '+title,body:'### 反馈类型\n'+type+'\n\n### 具体内容\n'+detail+'\n\n### 设备与浏览器\n'+(device||'未填写')+'\n\n### 应用版本\nXG Prime 5.7 Web\n\n---\n由 XG Prime 反馈入口生成；提交前请检查内容，不要包含个人隐私。'};
 }
 $('feedbackForm').addEventListener('submit',e=>{
  e.preventDefault();const item=buildFeedbackBody();if(!item)return;
