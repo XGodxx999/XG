@@ -149,7 +149,7 @@ function actionFits(root,a){
 }
 function allCapabilityRoots(){
  const roots=[...document.querySelectorAll('.tool-section[data-tool-section],.page[id]')];
- return roots.filter(r=>r.querySelector('.cathead,.pageHead'));
+ return roots.filter(r=>r.querySelector('.cathead,.pageHead')).sort((a,b)=>Number(b.matches('.tool-section'))-Number(a.matches('.tool-section')));
 }
 function rootForAction(a){
  const meta=AI_CAPABILITIES[a?.type];if(!meta)return null;
