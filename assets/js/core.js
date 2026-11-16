@@ -180,7 +180,7 @@ $('exchangeRun').onclick=async()=>{const from=$('exchangeFrom').value,to=$('exch
 function buildFeedbackBody(){
  const type=$('feedbackType').value,title=$('feedbackTitle').value.trim(),detail=$('feedbackDetail').value.trim(),device=$('feedbackDevice').value.trim();
  if(!title||!detail){$('feedbackStatus').textContent='请填写标题和具体内容。';return null}
- return {title:'['+type+'] '+title,body:'### 反馈类型\n'+type+'\n\n### 具体内容\n'+detail+'\n\n### 设备与浏览器\n'+(device||'未填写')+'\n\n### 应用版本\nXG Prime 5.0 Web\n\n---\n由 XG Prime 反馈入口生成；提交前请检查内容，不要包含个人隐私。'};
+ return {title:'['+type+'] '+title,body:'### 反馈类型\n'+type+'\n\n### 具体内容\n'+detail+'\n\n### 设备与浏览器\n'+(device||'未填写')+'\n\n### 应用版本\nXG Prime 5.3 Web\n\n---\n由 XG Prime 反馈入口生成；提交前请检查内容，不要包含个人隐私。'};
 }
 $('feedbackForm').addEventListener('submit',e=>{
  e.preventDefault();const item=buildFeedbackBody();if(!item)return;

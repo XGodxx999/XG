@@ -407,3 +407,23 @@ html[data-theme="light"] .dream small,html[data-theme="light"] .dream p,html[dat
 
 /* Network diagnostics */
 .network-status-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:10px 0}.network-status-row .pill{margin-left:auto}.network-dot{width:10px;height:10px;border-radius:50%;background:#9aa3ad;box-shadow:0 0 0 4px rgba(154,163,173,.13)}.network-dot.online{background:#39bd83;box-shadow:0 0 0 4px rgba(57,189,131,.14)}.network-dot.offline{background:#df6b6b;box-shadow:0 0 0 4px rgba(223,107,107,.14)}.network-details{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.network-detail{padding:10px;border:1px solid var(--line);border-radius:10px;min-width:0}.network-detail small{display:block;color:var(--muted);font-size:11px}.network-detail strong{display:block;margin-top:4px;font-size:13px;overflow-wrap:anywhere}@media(max-width:560px){.network-details{grid-template-columns:1fr 1fr}}
+/* XG Prime 5.1 — light-mode decorations + glass boundaries (5.0 test fixes) */
+html[data-theme="light"] .heroMark:before{border-color:rgba(0,0,0,.30)}
+html[data-theme="light"] .heroMark:after{background:#151a22;box-shadow:0 0 12px 3px rgba(0,0,0,.28)}
+html[data-theme="light"] .dream:after{color:rgba(0,0,0,.16)}
+html[data-theme="light"] .hero,html[data-theme="light"] .dream,html[data-theme="light"] .featurehero,html[data-theme="light"] .pageHead{border-color:rgba(0,0,0,.12)!important;box-shadow:inset 0 1px rgba(255,255,255,.9),0 14px 30px rgba(30,50,80,.14)!important}
+html[data-theme="light"] .card,html[data-theme="light"] .panel,html[data-theme="light"] .shortcut,html[data-theme="light"] .toolbox,html[data-theme="light"] .tool-feature{border-color:rgba(0,0,0,.10)!important}
+/* XG Prime 5.2 — light-mode nav/topbar edges (same family as 5.1 card fixes) */
+html[data-theme="light"] .bottomnav{border-color:rgba(0,0,0,.12)!important;box-shadow:inset 0 1px rgba(255,255,255,.9),0 14px 30px rgba(30,50,80,.16)!important}
+html[data-theme="light"] .topbar{border-bottom-color:rgba(0,0,0,.12)!important;background:rgba(255,255,255,.65)!important}
+/* XG Prime 5.2 (extended before push) — remaining white-on-white edges in light mode:
+   .pill/.profilepill/.avatar/.featureIcon/.quickbtn/.workStat still took the white
+   border from the base light rule (app.css:264); .btn.secondary (55 uses) still took
+   the white --glass-line border. Same dark-border treatment as 5.1, light mode only. */
+html[data-theme="light"] .pill,html[data-theme="light"] .profilepill,html[data-theme="light"] .avatar,html[data-theme="light"] .featureIcon,html[data-theme="light"] .quickbtn,html[data-theme="light"] .workStat{border-color:rgba(0,0,0,.10)!important}
+html[data-theme="light"] .btn.secondary{border-color:rgba(0,0,0,.12)!important}
+/* XG Prime 5.3 — light-mode active tab edge (readability, same family as 5.1/5.2).
+   The active bottom-nav pill is a near-white gradient with dark text; in light mode
+   its edge on pure white was the weakest boundary left. Dark border + soft shadow
+   only. No motion changes in 5.3 (user: stable, simple, easy to use). */
+html[data-theme="light"] .navbtn.active{border-color:rgba(0,0,0,.14);box-shadow:0 8px 22px rgba(30,50,80,.18),inset 0 1px rgba(255,255,255,.9)}
