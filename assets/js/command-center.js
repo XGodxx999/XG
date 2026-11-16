@@ -6,7 +6,7 @@ const toolNames={calc:'计算器 单位换算',focus:'专注计时',language:'�
 let overlay,input,list,items=[],active=-1,lastFocus=null;
 function build(){
  const header=$('.topbar');if(!header||$('#xgCommandOpen'))return;
- const actions=header.querySelector('div:last-child');
+ const actions=header.lastElementChild; // last child = actions row (language + profile); the old div:last-child query matched the brand-text div and put the button over the logo
  const open=document.createElement('button');open.id='xgCommandOpen';open.type='button';open.className='iconbtn';open.textContent='⌕';open.setAttribute('aria-label','搜索页面和工具');open.title='搜索页面和工具（⌘K / Ctrl K）';actions.insertBefore(open,actions.firstChild);
  overlay=document.createElement('div');overlay.id='xgCommandOverlay';overlay.hidden=true;
  overlay.style.cssText='position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.66);backdrop-filter:blur(12px);padding: min(14vh,110px) 16px 20px;display:flex;justify-content:center;align-items:flex-start';
