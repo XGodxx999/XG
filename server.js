@@ -6,7 +6,7 @@ const PORT = Number(process.env.PORT || 10000);
 const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || 'https://xgodxx999.github.io';
 const API_KEY = (process.env.AI_API_KEY || process.env.GEMINI_API_KEY || '').trim();
 const MODEL = (process.env.AI_MODEL || 'gemini-3.5-flash-lite').trim();
-const BASE_URL = (process.env.AI_BASE_URL || 'https://generativelanguage.googleapis.com/v1beta').replace(/\\/+$/, '');
+const BASE_URL = (process.env.AI_BASE_URL || 'https://generativelanguage.googleapis.com/v1beta').replace(/\/+$/, '');
 const DAILY_LIMIT = Math.max(1, Number.parseInt(process.env.AI_DAILY_LIMIT || '20', 10) || 20);
 const MAX_BODY_BYTES = 48_000;
 const MAX_MESSAGES = 24;
@@ -161,7 +161,7 @@ async function handleGemini(req, res, input, messages) {
   res.on('close', () => { clientClosed = true; reader.cancel().catch(() => {}); });
 
   function emitEvent(event) {
-    const line = event.split(/\\r?\\n/).find(value => value.startsWith('data:'));
+    const line = event.split(/\r?\n/).find(value => value.startsWith('data:'));
     if (!line) return;
     const raw = line.slice(5).trim();
     if (!raw || raw === '[DONE]') return;
@@ -177,14 +177,14 @@ async function handleGemini(req, res, input, messages) {
     const { value, done } = await reader.read();
     if (done) break;
     buffer += decoder.decode(value, { stream: true });
-    const events = buffer.split(/\\r?\\n\\r?\\n/);
+    const events = buffer.split(/\r?\n\r?\n/);
     buffer = events.pop() || '';
     for (const event of events) emitEvent(event);
   }
   buffer += decoder.decode();
   if (buffer.trim()) emitEvent(buffer);
   if (!clientClosed) {
-    res.write('data: [DONE]\\n\\n');
+    res.write('data: [DONE]\n\n');
     res.end();
   }
 }
