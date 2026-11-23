@@ -1,5 +1,5 @@
 'use strict';
-const CACHE='xg-prime-v77';
+const CACHE='xg-prime-v78';
 const SHELL=[
   './',
   './index.html',
